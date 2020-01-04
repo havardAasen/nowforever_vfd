@@ -1,0 +1,19 @@
+# Include your customized HAL commands here
+# This file will not be overwritten when you run stepconf again
+
+# Load the Nowforever VFD user component
+loadusr -Wn spindle-vfd ./nowforever_vfd -n spindle-vfd
+
+# connect the spindle direction pins to the VFD
+net vfd-fwd spindle-vfd.spindle-fwd <= spindle.0.forward
+net vfd-rev spindle-vfd.spindle-rev <= spindle.0.reverse
+
+# connect the spindle on pin to the VFD
+net vfd-run spindle-vfd.spindle-on <= spindle.0.on
+
+# connect the spindle RPM to the VFD
+# Note: spindle-cmd created by stepconf wizard
+net vfd-RPM spindle-vfd.rpm-cmd <= spindle.0.speed-out-abs
+
+# connect the spindle at speed to the VFD
+net vfd-at-speed spindle.0.at-speed <= spindle-vfd.at-speed
