@@ -1,0 +1,201 @@
+.TH NOWFOREVER_VFD 1 2020-06-01 "Nowforever VFD" "LinuxCNC Documentation"
+.SH NAME
+nowforever_vfd \- HAL userspace component for Nowforever D100 and E100 VFD
+.SH SYNOPSIS
+.B nowforever_vfd
+.RI [OPTIONS]
+.br
+.SH DESCRIPTION
+This component connects the Nowforever VFD via a serial
+(RS-485) connection.
+.PP
+The Nowforever VFD must be configured via the keypad to accept
+serial commmunication:
+.TP
+.BI P0\-000\ \=\ 2
+Set register P0-000 (select command source) to 2 (communication).
+.PP
+.TP
+.BI P0\-002\ \=\ 6
+Set register P0-002 (main frequency source selection) to 6 (communication).
+.PP
+.TP
+.BI P0\-007
+Set register P0-007 (upper limit frequency) according to motor specs. This is the
+maximum output frequency of the VFD in Hz. It should match the
+.B -F
+option.
+.PP
+.TP
+.BI P0\-008
+Set register P0-008 (lower limit frequency) according to motor specs. This is the
+minimum output frequency of the VFD in Hz. It should match the
+.B -f
+option.
+.PP
+.TP
+.BI P0\-055\ \=\ 1
+Set register P0-055 (local address) to 1. This matches the default in the
+nowforever_vfd driver, change this if your setup has special needs.
+.PP
+.TP
+.BI P0\-056\ \=\ 3
+Set register P0-056 (baud rate) to 3 (19200 bps). This matches the default in 
+nowforever_vfd driver, change this if your setup has special needs.
+.PP
+.TP
+.BI P0\-057\ \=\ 0
+Set register P0-057 (data format) to 0 (8n1 RTU). This matches the default
+in the nowforever_vfd driver, change this if your setup has special needs.
+Note that it is only the parity that can be changed.
+.PP
+Consult the Nowforever VFD instruction manual for details on using the keypad
+to program the VFD's registers, and alternative values for the above registers.
+.SH OPTIONS
+Options set on the command line overwrite the default settings.
+.TP
+.BI -h\ --help
+Show options and exit.
+.PP
+.TP
+.BI -d\ --device " <path>"
+(default /dev/ttyUSB0) Set the name of the serial device node to use.
+.PP
+.TP
+.BI -F\ --max-frequency " <f>"
+(default 400.0) This is the maximum output frequency of the VFD in Hz. It should match
+the register P0-007 set on the VFD.
+.PP
+.TP
+.BI -f\ --min-frequency " <f>"
+(default 0.0) This is the minimum output frequency of the VFD in Hz. It should match the
+register P0-008 set on the VFD.
+.PP
+.TP
+.BI -n\ --name " <string>"
+(default nowforever_vfd) Set the name of the HAL module. The HAL comp name will be
+set to <string> and all pin and parameter names will begin with <string>.
+.PP
+.TP
+.BI -p\ --parity " [even, odd, none]"
+(default none) Set serial parity to even, odd or none. This must match
+the setting in register P0-057 of the Nowforever VFD.
+.PP
+.TP
+.BI -r\ --rate " <n>"
+(default 19200) Set baud rate to <n>. It is an error if the rate is
+not one of the following: 2400, 4800, 9600, 19200, 38400. This must 
+match the setting in register P0-056 of the Nowforever VFD.
+.PP
+.TP
+.BI -v\ --verbose
+Turn on verbose messages. Note that if there are serial errors, this may
+become annoying. Verbose mode will cause all serial communication messages
+to be printed in hex on the terminal.
+.PP
+.TP
+.BI -S\ --motor-max-speed " <f>"
+(default 24000.0) The motor's max speed in RPM. This must match the motor speed
+at max frequency.
+.PP
+.TP
+.BI -t\ --target " <n>"
+(default 1) Set Modbus target (slave) number. This must match the local address
+you set on the Nowforever VFD in register P0-055.
+.SH PINS
+Where <name> is set with option
+.B -n
+or default value
+.TP
+.RB <name> ".inverter-status " (s32,\ out)
+drive status of the VFD (see the Nowforever VFD manual)
+.PP
+.TP
+.RB <name> ".frequency-command " (float,\ out)
+from the VFD
+.PP
+.TP
+.RB <name> ".frequency-out " (float,\ out)
+from the VFD
+.PP
+.TP
+.RB <name> ".output-current " (float,\ out)
+from the VFD
+.PP
+.TP
+.RB <name> ".output-volt " (float,\ out)
+from the VFD
+.PP
+.TP
+.RB <name> ".DC-bus-volt " (s32,\ out)
+from the VFD
+.PP
+.TP
+.RB <name> ".load-percentage " (float,\ out)
+from the VFD
+.PP
+.TP
+.RB <name> ".inverter-temp " (s32,\ out)
+from the VFD
+.PP
+.TP
+.RB <name> ".vfd-error " (bit,\ out)
+from the VFD
+.PP
+.TP
+.RB <name> ".at-speed " (bit,\ out)
+when speed is within
+.B .tolerance
+of
+.B .speed-command
+.PP
+.TP
+.RB <name> ".is-stopped " (bit,\ out)
+1 when VFD reports 0 Hz output, else 0
+.PP
+.TP
+.RB <name> ".motor-RPM " (float,\ out)
+speed sent to VFD in RPM
+.PP
+.TP
+.RB <name> ".spindle-on " (bit,\ in)
+1 for ON and 0 for OFF sent to VFD
+.PP
+.TP
+.RB <name> ".spindle-fwd " (bit,\ in)
+1 for ON and 0 for OFF, sent to VFD
+.PP
+.TP
+.RB <name> ".spindle-rev " (bit,\ in)
+1 for ON and 0 for OFF, sent to VFD
+.PP
+.TP
+.RB <name> ".speed-command " (float,\ in)
+speed sent to VFD in RPM
+.SH PARAMETERS
+Where <name> is set with option
+.B -n
+or default value
+.TP
+.RB <name> ".tolerance " (float,\ rw)
+(default 0.01) Spindle speed error tolerance. If the actual spindle
+speed is within
+.B .tolerance
+of the commanded speed, then the 
+.B .at-speed
+pin will go True. The default
+.B .tolerance
+is 0.01, which means the actual speed must be within 1% of the
+commanded speed.
+.PP
+.TP
+.RB <name> ".period-seconds " (float,\ rw)
+(default 0.1) How often the Modbus is polled
+.PP
+.TP
+.RB <name> ".modbus-errors " (s32,\ ro)
+amount of modbus errors
+.PP
+.TP
+.RB <name> ".retval " (s32,\ ro)
+The return value of an error in HAL
