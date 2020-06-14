@@ -1,7 +1,7 @@
 /*
     nowforever_vfd.c
 
-    This is a userspace program that intefaces the Nowforever D100/E100 VFD
+    This is a userspace program that interfaces the Nowforever D100/E100 VFD
     to the LinuxCNC HAL, using RS485 ModBus RTU.
 */
 
@@ -175,7 +175,7 @@ int set_motor_frequency(modbus_t *mb_ctx, haldata_t *haldata, float freq) {
 void write_data(modbus_t *mb_ctx, haldata_t *haldata) {
     set_motor(mb_ctx, haldata);
 
-    // The vfd dosen't like negative numbers
+    // The vfd doesn't like negative numbers
     if (*haldata -> rpm_cmd < 0) {
         *haldata -> rpm_cmd = fabsf(*haldata -> rpm_cmd);
     }
@@ -427,7 +427,7 @@ int main(int argc, char **argv) {
     retval = hal_pin_float_newf(HAL_OUT, &(haldata -> freq_cmd), hal_comp_id, "%s.frequency-command", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata -> output_freq), hal_comp_id, "%s.frequecy-out", modname);
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata -> output_freq), hal_comp_id, "%s.frequency-out", modname);
     if (retval != 0) goto out_closeHAL;
 
     retval = hal_pin_float_newf(HAL_OUT, &(haldata -> output_current), hal_comp_id, "%s.output-current", modname);
@@ -515,7 +515,7 @@ int main(int argc, char **argv) {
         write_data(mb_ctx, haldata);
     }
 
-    // If we get here, then everythin is fine, so just clean up and exit
+    // If we get here, then everything is fine, so just clean up and exit
     retval = 0;
 out_closeHAL:
     hal_exit(hal_comp_id);
