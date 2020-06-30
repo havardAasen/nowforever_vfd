@@ -21,16 +21,16 @@
 #include "rtapi.h"
 
 
-// If a modbus transaction fails, retry this many times before giving up.
+/* If a modbus transaction fails, retry this many times before giving up. */
 #define NUM_MODBUS_RETRIES 5
 
 #define START_REGISTER_R        0x0500
 #define NUM_REGISTER_R          8
-#define VFD_INSTRUCTION         0x0900  // Bit 0: 1 = run, 0 = stop
-                                        // Bit 1: 1 = reverse, 0 = forward
-                                        // Bit 2: 1 = JOG, 0 = stop JOG
-                                        // Bit 3: 1 = fault reset 0 = no reset
-#define VFD_FREQUENCY           0x0901  // Write frequency in 0.01 Hz steps
+#define VFD_INSTRUCTION         0x0900  /* Bit 0: 1 = run, 0 = stop */
+                                        /* Bit 1: 1 = reverse, 0 = forward */
+                                        /* Bit 2: 1 = JOG, 0 = stop JOG */
+                                        /* Bit 3: 1 = fault reset 0 = no reset */
+#define VFD_FREQUENCY           0x0901  /* Write frequency in 0.01 Hz steps */
 #define MAX_RPM                 24000
 #define MAX_FREQ                400
 
@@ -43,7 +43,7 @@ typedef struct {
 slavedata_t slavedata;
 
 typedef struct {
-    // Read pin from VFD, (inverter running state)
+    /* Read pin from VFD, (inverter running state) */
     hal_s32_t       *inverter_status;
     hal_float_t     *freq_cmd;
     hal_float_t     *output_freq;
@@ -54,18 +54,18 @@ typedef struct {
     hal_s32_t       *inverter_temp;
     hal_bit_t       *vfd_error;
 
-    // Created
+    /* Created */
     hal_bit_t       *at_speed;
     hal_bit_t       *is_stopped;
     hal_float_t     *output_rpm;
 
-    // In to VFD
+    /* In to VFD */
     hal_bit_t       *spindle_on;
     hal_bit_t       *spindle_fwd;
     hal_bit_t       *spindle_rev;
     hal_float_t     *rpm_cmd;
 
-    // Parameter
+    /* Parameter */
     hal_float_t     speed_tolerance;
     hal_float_t     period;
     hal_s32_t       modbus_errors;
@@ -84,11 +84,11 @@ int read_data(modbus_t *mb_ctx, slavedata_t *slavedata, haldata_t *hal_data_bloc
     uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
     int retval;
 
-    // Can't do anything with an empty datablock
+    /* Can't do anything with an empty datablock */
     if (hal_data_block == NULL)
         return -1;
 
-    // Signal error if parameter is null    
+    /* Signal error if parameter is null */
     if ((mb_ctx == NULL) || (slavedata == NULL))
     {
         hal_data_block -> modbus_errors++;
@@ -121,25 +121,26 @@ int read_data(modbus_t *mb_ctx, slavedata_t *slavedata, haldata_t *hal_data_bloc
 
 int set_motor(modbus_t *mb_ctx, haldata_t *haldata) {
     uint16_t val;
+    int retries;
 
-    // Run cw
+    /* Run cw */
     if (*haldata -> spindle_on && *haldata -> spindle_fwd &&
     (*haldata -> inverter_status & 3) != 1) {
         val = 1;
     }
-    // Run ccw
+    /* Run ccw */
     else if (*haldata -> spindle_on != *haldata -> spindle_fwd &&
     (*haldata -> inverter_status & 3) != 3) {
         val = 3;
     } 
-    // Stop
+    /* Stop */
     else if (!*haldata -> spindle_on && (*haldata -> inverter_status & 1) != 0) {
         val = 0;
     } else {
         return 0;
     }
 
-    for (int retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
+    for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
         if (modbus_write_registers(mb_ctx, VFD_INSTRUCTION, 0x01, &val) == 1) {
             return 0;
         }
@@ -151,16 +152,18 @@ int set_motor(modbus_t *mb_ctx, haldata_t *haldata) {
 }
 
 int set_motor_frequency(modbus_t *mb_ctx, haldata_t *haldata, float freq) {
-    // Modbus cant handle floats
+    /* Modbus cant handle floats */
     uint16_t val;
+    int retries;
+
     val = freq * 100;
      
-   // Cap at max frequency
+    /* Cap at max frequency */
     if (val > MAX_FREQ * 100) {
         val = MAX_FREQ * 100;
     }
 
-    for (int retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
+    for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
         if (modbus_write_registers(mb_ctx, VFD_FREQUENCY, 0x01, &val) == 1) {
             return 0;
         }
@@ -171,21 +174,22 @@ int set_motor_frequency(modbus_t *mb_ctx, haldata_t *haldata, float freq) {
     return -1;
 }
 
-// Wrapper function to write to vfd and set HAL pins
+/* Wrapper function to write to vfd and set HAL pins */
 void write_data(modbus_t *mb_ctx, haldata_t *haldata) {
+    int freq;
+
     set_motor(mb_ctx, haldata);
 
-    // The vfd doesn't like negative numbers
+    /* The vfd doesn't like negative numbers */
     if (*haldata -> rpm_cmd < 0) {
         *haldata -> rpm_cmd = fabsf(*haldata -> rpm_cmd);
     }
 
-    // Calculate frequency with 2 decimals
-    int freq;
+    /* Calculate frequency with 2 decimals */
     freq = (int)(((*haldata -> rpm_cmd / MAX_RPM) * MAX_FREQ) * 100);
     *haldata -> freq_cmd = (float) freq / 100;
 
-    // If equal, we don't write to vfd.
+    /* If equal, we don't write to vfd. */
     if (*haldata -> freq_cmd != *haldata -> output_freq) {
         set_motor_frequency(mb_ctx, haldata, *haldata -> freq_cmd);
     }
@@ -198,7 +202,7 @@ void write_data(modbus_t *mb_ctx, haldata_t *haldata) {
 
     *haldata -> output_rpm = *haldata -> output_freq * (MAX_RPM / MAX_FREQ);
     
-    // Calculates in % difference between set and actual frequency
+    /* Calculates in % difference between set and actual frequency */
     if (fabsf(1 - (*haldata -> freq_cmd / *haldata -> output_freq)) < haldata -> speed_tolerance) {
         *(haldata -> at_speed) = 1;
     } else {
@@ -214,7 +218,7 @@ void write_data(modbus_t *mb_ctx, haldata_t *haldata) {
     }
 }
 
-// Command-line options
+/* Command-line options */
 static struct option long_options[] = {
     {"device", 1, 0, 'd'},
     {"name", 1, 0 , 'n'},
@@ -245,7 +249,7 @@ int match_string(char *string, char **matches) {
     len = strlen(string);
     while (matches[which] != NULL) {
         if ((!strncmp(string, matches[which], len)) && (len <= strlen(matches[which]))) {
-            if (match >= 0) return -1;  // Multiple matches
+            if (match >= 0) return -1;  /* Multiple matches */
             match = which;
         }
         ++which;
@@ -255,29 +259,27 @@ int match_string(char *string, char **matches) {
 
 void usage(int argc, char **argv) {
     printf("Usage: %s [ARGUMENTS]\n", argv[0]);
-    printf(
-    "\n"
-    "This program interfaces the Nowforever D100/E100 VFD to the LinuxCNC HAL.\n"
-    "\n"
-    "Optional arguments:\n"
-    "   -d, -device <path> (default: /dev/ttyUSB0)\n"
-    "       Set the name of the serial device to use\n"
-    "   -n, --name <string> (default: nowforever_vfd)\n"
-    "       Set the name of the HAL module.  The HAL comp name will be set to <string>, and all pin\n"
-    "       and parameter names will begin with <string>.\n"
-    "   -p, --parity {even,odd,none} (default: none)\n"
-    "       Set serial parity to 'even', 'odd', or 'none'.\n"
-    "   -r, --rate <n> (default: 19200)\n"
-    "       Set baud rate to <n>. It is an error if the rate is not one of the following:\n"
-    "       2400, 4800, 9600, 19200, 38400\n"
-    "   -t, --target <n> (default: 1)\n"
-    "       Set Modbus target (slave) number. This must match the device\n"
-    "       number you set on the Nowforever VFD.\n"
-    "   -v, --verbose\n"
-    "       Turn on verbose mode.\n"
-    "   -h, --help\n"
-    "       Show this help.\n"
-    );
+    printf("\n");
+    printf("This program interfaces the Nowforever D100/E100 VFD to the LinuxCNC HAL.\n");
+    printf("\n");
+    printf("Optional arguments:\n");
+    printf("   -d, -device <path> (default: /dev/ttyUSB0)\n");
+    printf("       Set the name of the serial device to use\n");
+    printf("   -n, --name <string> (default: nowforever_vfd)\n");
+    printf("       Set the name of the HAL module.  The HAL comp name will be set to <string>, and all pin\n");
+    printf("       and parameter names will begin with <string>.\n");
+    printf("   -p, --parity {even,odd,none} (default: none)\n");
+    printf("       Set serial parity to 'even', 'odd', or 'none'.\n");
+    printf("   -r, --rate <n> (default: 19200)\n");
+    printf("       Set baud rate to <n>. It is an error if the rate is not one of the following:\n");
+    printf("       2400, 4800, 9600, 19200, 38400\n");
+    printf("   -t, --target <n> (default: 1)\n");
+    printf("       Set Modbus target (slave) number. This must match the device\n");
+    printf("       number you set on the Nowforever VFD.\n");
+    printf("   -v, --verbose\n");
+    printf("       Turn on verbose mode.\n");
+    printf("   -h, --help\n");
+    printf("       Show this help.\n");
 }
 
 int main(int argc, char **argv) {
@@ -298,7 +300,7 @@ int main(int argc, char **argv) {
 
     done = 0;
 
-    // Assume that nothing is specified on the command line
+    /* Assume that nothing is specified on the command line */
     device = "/dev/ttyUSB0";
     baud = 19200;
     bits = 8;
@@ -311,11 +313,11 @@ int main(int argc, char **argv) {
     slavedata.read_reg_start = START_REGISTER_R;
     slavedata.read_reg_count = NUM_REGISTER_R;
 
-    // Process command line options
+    /* Process command line options */
     while ((opt = getopt_long(argc, argv, option_string, long_options, NULL)) != -1) {
         switch (opt) {
-            case 'd':  // Device name, default /dev/ttyUSB0
-                // Could check the device name here, but we'll leave it to the library open
+            case 'd':  /* Device name, default /dev/ttyUSB0 */
+                /* Could check the device name here, but we'll leave it to the library open */
                 if (strlen(optarg) > FILENAME_MAX) {
                     printf("ERROR: device node name is to long: %s\n", optarg);
                     retval = -1;
@@ -324,7 +326,7 @@ int main(int argc, char **argv) {
                 device = strdup(optarg);
                 break;
 
-            // Module base name
+            /* Module base name */
             case 'n':  
                 if (strlen(optarg) > HAL_NAME_LEN - 20) {
                     printf("ERROR: HAL module name to long: %s\n", optarg);
@@ -334,7 +336,7 @@ int main(int argc, char **argv) {
                 modname = strdup(optarg);
                 break;
 
-            case 'p':  // Parity, should be a string like "even", "odd" or "none"
+            case 'p':  /* Parity, should be a string like "even", "odd" or "none" */
                 argindex = match_string(optarg, paritystrings);
                 if (argindex < 0) {
                     printf("ERROR: invalid parity: %s\n", optarg);
@@ -344,7 +346,7 @@ int main(int argc, char **argv) {
                 parity = paritychars[argindex];
                 break;
 
-            case 'r':  // Baud rate, defaults to 19200
+            case 'r':  /* Baud rate, defaults to 19200 */
                 argindex = match_string(optarg, ratestrings);
                 if (argindex < 0) {
                     printf("ERROR: invalid baud rate: %s\n", optarg);
@@ -354,7 +356,7 @@ int main(int argc, char **argv) {
                 baud = atoi(ratestrings[argindex]);
                 break;
             
-            case 't':  // Target number (MODBUS ID), default 1
+            case 't':  /* Target number (MODBUS ID), default 1 */
                 argvalue = strtol(optarg, &endarg, 10);
                 if ((*endarg != '\0') || (argvalue < 1) || (argvalue > 31)) {
                     printf("ERROR: invalid slave number: %s\n", optarg);
@@ -383,13 +385,13 @@ int main(int argc, char **argv) {
     printf("%s: device='%s', baud='%d', bits=%d, parity='%c', stopbits=%d, address=%d\n",
             modname, device, baud, bits, parity, stopbits, slave);
 
-    // Point TERM and INT signals at our quit function.
-    // If a signal is received between here and the main loop, it should prevent
-    // some initialization from happening.
+    /* Point TERM and INT signals at our quit function. */
+    /* If a signal is received between here and the main loop, it should prevent */
+    /* some initialization from happening. */
     signal(SIGINT, quit);
     signal(SIGTERM, quit);
 
-    // Assume 19200 bps 8-N-1 serial setting, device 1
+    /* Assume 19200 bps 8-N-1 serial setting, device 1 */
     mb_ctx = modbus_new_rtu(device, baud, parity, bits, stopbits);
     if (mb_ctx == NULL) {
         printf("%s: ERROR: Couldn't open modbus serial device: %s\n", modname, modbus_strerror(errno));
@@ -406,7 +408,7 @@ int main(int argc, char **argv) {
 
     modbus_set_slave(mb_ctx, slave);
 
-    // Create HAL component
+    /* Create HAL component */
     hal_comp_id = hal_init(modname);
     if (hal_comp_id < 0) {
         printf("%s: ERROR: hal_init failed\n", modname);
@@ -481,7 +483,7 @@ int main(int argc, char **argv) {
     retval = hal_param_s32_newf(HAL_RO, &(haldata -> retval), hal_comp_id, "%s.retval", modname);
     if (retval != 0) goto out_closeHAL;
     
-    // Make default data match what we expect to use
+    /* Make default data match what we expect to use */
     *haldata -> inverter_status = 0;
     *haldata -> freq_cmd = 0.0;
     *haldata -> output_freq = 0.0;
@@ -500,11 +502,11 @@ int main(int argc, char **argv) {
     haldata -> period = 0.1;
     haldata -> modbus_errors = 0;
 
-    // Activate HAL component
+    /* Activate HAL component */
     hal_ready(hal_comp_id);
 
     while (done == 0) {
-        // Don't scan to fast, and not delay more than a few seconds
+        /* Don't scan to fast, and not delay more than a few seconds */
         if (haldata -> period < 0.001) haldata -> period = 0.001;
         if (haldata -> period > 2.0) haldata -> period = 2.0;
         period_timespec.tv_sec = (time_t)(haldata -> period);
@@ -515,7 +517,7 @@ int main(int argc, char **argv) {
         write_data(mb_ctx, haldata);
     }
 
-    // If we get here, then everything is fine, so just clean up and exit
+    /* If we get here, then everything is fine, so just clean up and exit */
     retval = 0;
 out_closeHAL:
     hal_exit(hal_comp_id);
@@ -525,3 +527,4 @@ out_close:
 out_noclose:
     return retval;
 }
+
