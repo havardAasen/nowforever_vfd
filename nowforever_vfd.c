@@ -144,7 +144,7 @@ int set_motor(modbus_t *mb_ctx, haldata_t *haldata) {
         if (modbus_write_registers(mb_ctx, VFD_INSTRUCTION, 0x01, &val) == 1) {
             return 0;
         }
-        fprintf(stderr, "%s: error writing %u to register 0x04%x: %s\n", __func__, val,
+        fprintf(stderr, "%s: error writing %u to register 0x%04x: %s\n", __func__, val,
                         VFD_INSTRUCTION, modbus_strerror(errno));
         haldata -> modbus_errors++;
     }
@@ -152,7 +152,7 @@ int set_motor(modbus_t *mb_ctx, haldata_t *haldata) {
 }
 
 int set_motor_frequency(modbus_t *mb_ctx, haldata_t *haldata, float freq) {
-    /* Modbus cant handle floats */
+    /* Modbus can't handle floats */
     uint16_t val;
     int retries;
 
