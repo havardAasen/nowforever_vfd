@@ -31,8 +31,6 @@
                                         /* Bit 2: 1 = JOG, 0 = stop JOG */
                                         /* Bit 3: 1 = fault reset 0 = no reset */
 #define VFD_FREQUENCY           0x0901  /* Write frequency in 0.01 Hz steps */
-#define MAX_RPM                 24000
-#define MAX_FREQ                400
 
 typedef struct {
     int slave;
@@ -79,6 +77,9 @@ int hal_comp_id;
 
 static int done;
 char *modname = "nowforever_vfd";
+
+float spindle_max_speed = 24000.0;
+float max_freq = 400.0;
 
 int read_data(modbus_t *mb_ctx, slavedata_t *slavedata, haldata_t *hal_data_block) {
     uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
@@ -159,8 +160,8 @@ int set_motor_frequency(modbus_t *mb_ctx, haldata_t *haldata, float freq) {
     val = freq * 100;
      
     /* Cap at max frequency */
-    if (val > MAX_FREQ * 100) {
-        val = MAX_FREQ * 100;
+    if (val > max_freq * 100) {
+        val = max_freq * 100;
     }
 
     for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
@@ -186,7 +187,7 @@ void write_data(modbus_t *mb_ctx, haldata_t *haldata) {
     }
 
     /* Calculate frequency with 2 decimals */
-    freq = (int)(((*haldata -> rpm_cmd / MAX_RPM) * MAX_FREQ) * 100);
+    freq = (int)(((*haldata -> rpm_cmd / spindle_max_speed) * max_freq) * 100);
     *haldata -> freq_cmd = (float) freq / 100;
 
     /* If equal, we don't write to vfd. */
@@ -200,7 +201,7 @@ void write_data(modbus_t *mb_ctx, haldata_t *haldata) {
         *haldata -> is_stopped = 0;
     }
 
-    *haldata -> output_rpm = *haldata -> output_freq * (MAX_RPM / MAX_FREQ);
+    *haldata -> output_rpm = *haldata -> output_freq * (spindle_max_speed / max_freq);
     
     /* Calculates in % difference between set and actual frequency */
     if (fabsf(1 - (*haldata -> freq_cmd / *haldata -> output_freq)) < haldata -> speed_tolerance) {
@@ -227,10 +228,12 @@ static struct option long_options[] = {
     {"verbose", 0, 0, 'v'},
     {"target", 1, 0, 't'},
     {"help", 0, 0, 'h'},
+    {"spindle-max-speed", 1, 0, 'S'},
+    {"max-frequency", 1, 0, 'F'},
     {0,0,0,0}
 };
 
-static char *option_string = "d:n:p:r:vt:h";
+static char *option_string = "d:n:p:r:vt:hS:F:";
 
 static char *paritystrings[] = {"even", "odd", "none", NULL};
 static char paritychars[] = {'E', 'O', 'N'};
@@ -276,6 +279,12 @@ void usage(int argc, char **argv) {
     printf("   -t, --target <n> (default: 1)\n");
     printf("       Set Modbus target (slave) number. This must match the device\n");
     printf("       number you set on the Nowforever VFD.\n");
+    printf("   -S, spindle-max-speed <f> (default: 24000.0)\n");
+    printf("       The spindle's max speed in RPM. This must match the spindle speed value\n");
+    printf("        when it is at max frequency\n");
+    printf("   -F, --max-frequency <f> (default: 400.0)\n");
+    printf("       This is the maximum output frequency of the VFD in Hz. It should correspond\n");
+    printf("       to the maximum output value configured in VFD register P0-007\n");
     printf("   -v, --verbose\n");
     printf("       Turn on verbose mode.\n");
     printf("   -h, --help\n");
@@ -366,6 +375,22 @@ int main(int argc, char **argv) {
                 slave = argvalue;
                 break;
 
+            case 'S':
+                spindle_max_speed = strtof(optarg, &endarg);
+                if ((*endarg != '\0') || (spindle_max_speed == 0.0)) {
+                    printf("%s: ERROR: invalid spindle max speed: %s\n", modname, optarg);
+                    exit(1);
+                }
+                break;
+
+            case 'F':
+                max_freq = strtof(optarg, &endarg);
+                if ((*endarg != '\0') || (max_freq == 0.0)) {
+                    printf("%s: ERROR: invalid max freq: %s\n", modname, optarg);
+                    exit(1);
+                }
+                break;
+
             case 'v':
                 verbose = 1;
                 break;
@@ -380,6 +405,11 @@ int main(int argc, char **argv) {
                 exit(1);
                 break;
         }
+    }
+
+    if (max_freq < 0) {
+        printf("%s: max frequency (%f) must be more than 0\n", modname, max_freq);
+        exit(1);
     }
 
     printf("%s: device='%s', baud='%d', bits=%d, parity='%c', stopbits=%d, address=%d\n",

@@ -29,9 +29,7 @@ option.
 .TP
 .BI P0\-008
 Set register P0-008 (lower limit frequency) according to motor specs. This is the
-minimum output frequency of the VFD in Hz. It should match the
-.B -f
-option.
+minimum output frequency of the VFD in Hz.
 .PP
 .TP
 .BI P0\-055\ \=\ 1
@@ -67,11 +65,6 @@ Show options and exit.
 the register P0-007 set on the VFD.
 .PP
 .TP
-.BI -f\ --min-frequency " <f>"
-(default 0.0) This is the minimum output frequency of the VFD in Hz. It should match the
-register P0-008 set on the VFD.
-.PP
-.TP
 .BI -n\ --name " <string>"
 (default nowforever_vfd) Set the name of the HAL module. The HAL comp name will be
 set to <string> and all pin and parameter names will begin with <string>.
@@ -94,8 +87,8 @@ become annoying. Verbose mode will cause all serial communication messages
 to be printed in hex on the terminal.
 .PP
 .TP
-.BI -S\ --motor-max-speed " <f>"
-(default 24000.0) The motor's max speed in RPM. This must match the motor speed
+.BI -S\ --spindle-max-speed " <f>"
+(default 24000.0) The motor's max speed in RPM. This must match the spindle speed
 at max frequency.
 .PP
 .TP
