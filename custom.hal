@@ -13,7 +13,7 @@ net vfd-run spindle-vfd.spindle-on <= spindle.0.on
 
 # connect the spindle RPM to the VFD
 # Note: spindle-cmd created by stepconf wizard
-net vfd-RPM spindle-vfd.rpm-cmd <= spindle.0.speed-out-abs
+net vfd-rpm spindle-vfd.rpm-cmd <= spindle.0.speed-out-abs
 
 # connect the spindle at speed to the VFD
 net vfd-at-speed spindle.0.at-speed <= spindle-vfd.at-speed

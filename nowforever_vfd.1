@@ -147,8 +147,8 @@ of
 1 when VFD reports 0 Hz output, else 0
 .PP
 .TP
-.RB <name> ".motor-RPM " (float,\ out)
-speed sent to VFD in RPM
+.RB <name> ".spindle-speed-fb " (float,\ out)
+speed in RPM sent from VFD to LinuxCNC
 .PP
 .TP
 .RB <name> ".spindle-on " (bit,\ in)
@@ -166,9 +166,9 @@ speed sent to VFD in RPM
 .RB <name> ".speed-command " (float,\ in)
 speed sent to VFD in RPM
 .SH PARAMETERS
-Where <name> is set with option
+Where <name> is nowforever_vfd or the name given with the
 .B -n
-or default value
+option
 .TP
 .RB <name> ".tolerance " (float,\ rw)
 (default 0.01) Spindle speed error tolerance. If the actual spindle
