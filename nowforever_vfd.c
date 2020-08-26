@@ -5,15 +5,15 @@
     to the LinuxCNC HAL, using RS485 ModBus RTU.
 */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <time.h>
-#include <string.h>
-#include <stdlib.h>
-#include <signal.h>
 #include <errno.h>
 #include <getopt.h>
 #include <math.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 #include <modbus.h>
 
@@ -55,13 +55,13 @@ typedef struct {
     /* Created */
     hal_bit_t       *at_speed;
     hal_bit_t       *is_stopped;
-    hal_float_t     *output_rpm;
+    hal_float_t     *speed_fb;
 
     /* In to VFD */
     hal_bit_t       *spindle_on;
     hal_bit_t       *spindle_fwd;
     hal_bit_t       *spindle_rev;
-    hal_float_t     *rpm_cmd;
+    hal_float_t     *speed_cmd;
 
     /* Parameter */
     hal_float_t     speed_tolerance;
@@ -145,54 +145,50 @@ int set_motor(modbus_t *mb_ctx, haldata_t *haldata) {
         if (modbus_write_registers(mb_ctx, VFD_INSTRUCTION, 0x01, &val) == 1) {
             return 0;
         }
-        fprintf(stderr, "%s: error writing %u to register 0x%04x: %s\n", __func__, val,
-                        VFD_INSTRUCTION, modbus_strerror(errno));
+        fprintf(stderr, "%s: error writing %u to register 0x%04x: %s\n",
+                __func__,
+                val,
+                VFD_INSTRUCTION,
+                modbus_strerror(errno));
         haldata -> modbus_errors++;
     }
     return -1;
 }
 
-int set_motor_frequency(modbus_t *mb_ctx, haldata_t *haldata, float freq) {
-    /* Modbus can't handle floats */
-    uint16_t val;
-    int retries;
-
-    val = freq * 100;
-     
-    /* Cap at max frequency */
-    if (val > max_freq * 100) {
-        val = max_freq * 100;
-    }
-
-    for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
-        if (modbus_write_registers(mb_ctx, VFD_FREQUENCY, 0x01, &val) == 1) {
-            return 0;
-        }
-        fprintf(stderr, "%s: error writing %u to register 0x%04x: %s\n", __func__, val,
-                        VFD_FREQUENCY, modbus_strerror(errno));
-        haldata -> modbus_errors++;
-    }
-    return -1;
-}
-
-/* Wrapper function to write to vfd and set HAL pins */
+/* Write to vfd and set HAL pins */
 void write_data(modbus_t *mb_ctx, haldata_t *haldata) {
-    int freq;
+    int retval;
+    int retries;
+    hal_float_t hzcalc;
+    uint16_t freq;
 
     set_motor(mb_ctx, haldata);
 
-    /* The vfd doesn't like negative numbers */
-    if (*haldata -> rpm_cmd < 0) {
-        *haldata -> rpm_cmd = fabsf(*haldata -> rpm_cmd);
+    /* Calculate frequency and sets it to be an absolute value */
+    hzcalc = max_freq / spindle_max_speed;
+    freq = abs((int) *haldata -> speed_cmd * hzcalc * 100);
+
+    /* Cap at max frequency */
+    if (freq > max_freq * 100) {
+        freq = max_freq * 100;
     }
 
-    /* Calculate frequency with 2 decimals */
-    freq = (int)(((*haldata -> rpm_cmd / spindle_max_speed) * max_freq) * 100);
-    *haldata -> freq_cmd = (float) freq / 100;
-
-    /* If equal, we don't write to vfd. */
-    if (*haldata -> freq_cmd != *haldata -> output_freq) {
-        set_motor_frequency(mb_ctx, haldata, *haldata -> freq_cmd);
+    if (freq != *haldata -> output_freq) {
+        for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
+            retval = modbus_write_registers(
+                    mb_ctx,
+                    VFD_FREQUENCY,
+                    0x01,
+                    &freq);
+            if (retval != 1) {
+                fprintf(stderr, "%s: error writing %u to register 0x%04x: %s\n",
+                        __func__,
+                        freq,
+                        VFD_FREQUENCY,
+                        modbus_strerror(errno));
+                haldata -> modbus_errors++;
+            }
+        }
     }
 
     if (*haldata -> output_freq == 0) {
@@ -201,17 +197,17 @@ void write_data(modbus_t *mb_ctx, haldata_t *haldata) {
         *haldata -> is_stopped = 0;
     }
 
-    *haldata -> output_rpm = *haldata -> output_freq * (spindle_max_speed / max_freq);
+    *haldata -> speed_fb = *haldata -> output_freq / hzcalc;
     
     /* Calculates in % difference between set and actual frequency */
-    if (fabsf(1 - (*haldata -> freq_cmd / *haldata -> output_freq)) < haldata -> speed_tolerance) {
+    if (fabs(1 - (*haldata -> freq_cmd / *haldata -> output_freq)) < haldata -> speed_tolerance) {
         *(haldata -> at_speed) = 1;
     } else {
         *haldata -> at_speed = 0;
     }
     
     if (*haldata -> spindle_on == 0) {
-        *(haldata -> at_speed) = 0;
+        *haldata -> at_speed = 0;
     }
 
     if ((*haldata -> inverter_status & 24) != 0) {
@@ -486,7 +482,7 @@ int main(int argc, char **argv) {
     retval = hal_pin_bit_newf(HAL_OUT, &(haldata -> is_stopped), hal_comp_id, "%s.is-stopped", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata -> output_rpm), hal_comp_id, "%s.motor-RPM", modname);
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata -> speed_fb), hal_comp_id, "%s.spindle-speed-fb", modname);
     if (retval != 0) goto out_closeHAL;
 
     retval = hal_pin_bit_newf(HAL_IN, &(haldata -> spindle_on), hal_comp_id, "%s.spindle-on", modname);
@@ -498,7 +494,7 @@ int main(int argc, char **argv) {
     retval = hal_pin_bit_newf(HAL_IN, &(haldata -> spindle_rev), hal_comp_id, "%s.spindle-rev", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_float_newf(HAL_IN, &(haldata -> rpm_cmd), hal_comp_id, "%s.speed-command", modname);
+    retval = hal_pin_float_newf(HAL_IN, &(haldata -> speed_cmd), hal_comp_id, "%s.speed-command", modname);
     if (retval != 0) goto out_closeHAL;
 
     retval = hal_param_float_newf(HAL_RW, &(haldata -> speed_tolerance), hal_comp_id, "%s.tolerance", modname);
@@ -526,7 +522,7 @@ int main(int argc, char **argv) {
 
     *haldata -> at_speed = 0;
     *haldata -> is_stopped = 0;
-    *haldata -> rpm_cmd = 0;
+    *haldata -> speed_cmd = 0;
 
     haldata -> speed_tolerance = 0.01;
     haldata -> period = 0.1;
@@ -546,6 +542,8 @@ int main(int argc, char **argv) {
         read_data(mb_ctx, &slavedata, haldata);
         write_data(mb_ctx, haldata);
     }
+
+    /* TODO Add motor off */
 
     /* If we get here, then everything is fine, so just clean up and exit */
     retval = 0;
