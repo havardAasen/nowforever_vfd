@@ -9,7 +9,7 @@ I'm assuming you already have set up LinuxCNC, if not, go to their website
 We require some additional packages, \
 git - to download the repository \
 libmodbus-dev - developement files for the modbus connection \
-linuxcnc-uspace-dev - developement files for LinuxCNC \
+linuxcnc-uspace-dev - developement files for LinuxCNC 
 
 ```
 $ sudo apt-get install libmodbus-dev linuxcnc-uspace-dev git
