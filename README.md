@@ -2,23 +2,22 @@
 Nowforever D100 and E100 VFD LinuxCNC HAL userspace interface / driver using
 RS485 MODBUS RTU
 
-## Building
+## Build and install
 I'm assuming you already have set up LinuxCNC, if not, go to their website
 <https://linuxcnc.org> to get started.
 
 We require some additional packages, \
 git - to download the repository \
 libmodbus-dev - developement files for the modbus connection \
-linuxcnc-uspace-dev - developement files for LinuxCNC 
+linuxcnc-uspace-dev - developement files for LinuxCNC
 
 ```
 $ sudo apt-get install libmodbus-dev linuxcnc-uspace-dev git
 $ git clone https://github.com/havardAasen/nowforever_vfd.git
 $ cd nowforever_vfd
 $ make
+$ sudo make install
 ```
-
-Copy the binary into your machine configuration directory
 
 ## Documentation and usage
 Look at the man-page **nowforever_vfd.1** which describes the parameter to
