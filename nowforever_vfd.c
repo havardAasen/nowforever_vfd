@@ -33,12 +33,12 @@
 #define VFD_FREQUENCY           0x0901  /* Write frequency in 0.01 Hz steps */
 
 typedef struct {
-    int slave;
+    int target;
     int read_reg_start;
     int read_reg_count;
-} slavedata_t;
+} targetdata_t;
 
-slavedata_t slavedata;
+targetdata_t targetdata;
 
 typedef struct {
     /* Read pin from VFD, (inverter running state) */
@@ -81,7 +81,7 @@ char *modname = "nowforever_vfd";
 float spindle_max_speed = 24000.0;
 float max_freq = 400.0;
 
-int read_data(modbus_t *mb_ctx, slavedata_t *slavedata, haldata_t *hal_data_block) {
+int read_data(modbus_t *mb_ctx, targetdata_t *targetdata, haldata_t *hal_data_block) {
     uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
     int retval;
 
@@ -90,16 +90,16 @@ int read_data(modbus_t *mb_ctx, slavedata_t *slavedata, haldata_t *hal_data_bloc
         return -1;
 
     /* Signal error if parameter is null */
-    if ((mb_ctx == NULL) || (slavedata == NULL))
+    if ((mb_ctx == NULL) || (targetdata == NULL))
     {
         hal_data_block -> modbus_errors++;
         return -1;
     }
 
-    retval = modbus_read_registers(mb_ctx, slavedata -> read_reg_start,
-                                slavedata -> read_reg_count, receive_data);
+    retval = modbus_read_registers(mb_ctx, targetdata -> read_reg_start,
+                                targetdata -> read_reg_count, receive_data);
     
-    if (retval == slavedata -> read_reg_count) {
+    if (retval == targetdata -> read_reg_count) {
         retval = 0;
         hal_data_block -> retval = retval;
         if (retval == 0) {
@@ -273,7 +273,7 @@ void usage(int argc, char **argv) {
     printf("       Set baud rate to <n>. It is an error if the rate is not one of the following:\n");
     printf("       2400, 4800, 9600, 19200, 38400\n");
     printf("   -t, --target <n> (default: 1)\n");
-    printf("       Set Modbus target (slave) number. This must match the device\n");
+    printf("       Set Modbus target number. This must match the device\n");
     printf("       number you set on the Nowforever VFD.\n");
     printf("   -S, spindle-max-speed <f> (default: 24000.0)\n");
     printf("       The spindle's max speed in RPM. This must match the spindle speed value\n");
@@ -297,7 +297,7 @@ int main(int argc, char **argv) {
 
     int retval = 0;
     modbus_t *mb_ctx;
-    int slave;
+    int target;
     struct timespec period_timespec;
     char *endarg;
     int opt;
@@ -314,9 +314,9 @@ int main(int argc, char **argv) {
 
     verbose = 0;
 
-    slave = 1;
-    slavedata.read_reg_start = START_REGISTER_R;
-    slavedata.read_reg_count = NUM_REGISTER_R;
+    target = 1;
+    targetdata.read_reg_start = START_REGISTER_R;
+    targetdata.read_reg_count = NUM_REGISTER_R;
 
     /* Process command line options */
     while ((opt = getopt_long(argc, argv, option_string, long_options, NULL)) != -1) {
@@ -364,11 +364,11 @@ int main(int argc, char **argv) {
             case 't':  /* Target number (MODBUS ID), default 1 */
                 argvalue = strtol(optarg, &endarg, 10);
                 if ((*endarg != '\0') || (argvalue < 1) || (argvalue > 31)) {
-                    printf("ERROR: invalid slave number: %s\n", optarg);
+                    printf("ERROR: invalid target number: %s\n", optarg);
                     retval = -1;
                     goto out_noclose;
                 }
-                slave = argvalue;
+                target = argvalue;
                 break;
 
             case 'S':
@@ -409,7 +409,7 @@ int main(int argc, char **argv) {
     }
 
     printf("%s: device='%s', baud='%d', bits=%d, parity='%c', stopbits=%d, address=%d\n",
-            modname, device, baud, bits, parity, stopbits, slave);
+            modname, device, baud, bits, parity, stopbits, target);
 
     /* Point TERM and INT signals at our quit function. */
     /* If a signal is received between here and the main loop, it should prevent */
@@ -432,7 +432,7 @@ int main(int argc, char **argv) {
 
     modbus_set_debug(mb_ctx, verbose);
 
-    modbus_set_slave(mb_ctx, slave);
+    modbus_set_slave(mb_ctx, target);
 
     /* Create HAL component */
     hal_comp_id = hal_init(modname);
@@ -539,7 +539,7 @@ int main(int argc, char **argv) {
         period_timespec.tv_nsec = (long)((haldata -> period - period_timespec.tv_sec) * 1000000000l);
         nanosleep(&period_timespec, NULL);
 
-        read_data(mb_ctx, &slavedata, haldata);
+        read_data(mb_ctx, &targetdata, haldata);
         write_data(mb_ctx, haldata);
     }
 
