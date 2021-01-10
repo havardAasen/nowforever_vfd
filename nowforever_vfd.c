@@ -275,7 +275,7 @@ void usage(int argc, char **argv) {
     printf("   -t, --target <n> (default: 1)\n");
     printf("       Set Modbus target number. This must match the device\n");
     printf("       number you set on the Nowforever VFD.\n");
-    printf("   -S, spindle-max-speed <f> (default: 24000.0)\n");
+    printf("   -S, --spindle-max-speed <f> (default: 24000.0)\n");
     printf("       The spindle's max speed in RPM. This must match the spindle speed value\n");
     printf("        when it is at max frequency\n");
     printf("   -F, --max-frequency <f> (default: 400.0)\n");
