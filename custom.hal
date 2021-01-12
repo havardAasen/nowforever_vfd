@@ -2,7 +2,7 @@
 # This file will not be overwritten when you run stepconf again
 
 # Load the Nowforever VFD user component
-loadusr -Wn spindle-vfd ./nowforever_vfd -n spindle-vfd
+loadusr -Wn spindle-vfd nowforever_vfd -n spindle-vfd
 
 # connect the spindle direction pins to the VFD
 net vfd-fwd spindle-vfd.spindle-fwd <= spindle.0.forward
