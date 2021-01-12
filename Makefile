@@ -8,7 +8,8 @@ mandir = $(datarootdir)/man
 man1dir = $(mandir)/man1
 
 CC = gcc
-CFLAGS := -Wall -D_FORTITY_SOURCE=2 -O2 -DRTAPI -I/usr/include/linuxcnc -I/usr/include/modbus
+CFLAGS = -Wall -g -O
+ALL_CFLAGS = -O2 -D_FORTITY_SOURCE=2 -DRTAPI -I/usr/include/linuxcnc -I/usr/include/modbus $(CFLAGS)
 LDLIBS := -lmodbus -llinuxcnchal -lpthread -lm -lglib-2.0
 LDFLAGS := -Wl,-z,now -Wl,-z,relro
 
@@ -16,7 +17,7 @@ nowforever_vfd: nowforever_vfd.o
 	$(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(ALL_CFLAGS) -o $@ -c $<
 
 .PHONY: install clean distclean uninstall
 
