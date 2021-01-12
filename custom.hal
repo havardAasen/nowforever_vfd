@@ -2,7 +2,7 @@
 # This file will not be overwritten when you run stepconf again
 
 # Load the Nowforever VFD user component
-loadusr -Wn spindle-vfd nowforever_vfd -n spindle-vfd
+loadusr -Wn spindle-vfd ./nowforever_vfd -n spindle-vfd
 
 # connect the spindle direction pins to the VFD
 net vfd-fwd spindle-vfd.spindle-fwd <= spindle.0.forward
@@ -12,8 +12,8 @@ net vfd-rev spindle-vfd.spindle-rev <= spindle.0.reverse
 net vfd-run spindle-vfd.spindle-on <= spindle.0.on
 
 # connect the spindle RPM to the VFD
-# Note: spindle-cmd created by stepconf wizard
-net vfd-rpm spindle-vfd.rpm-cmd <= spindle.0.speed-out-abs
+net vfd-speed-in spindle-vfd.spindle-speed-fb <= spindle.0.speed-in
+net vfd-speed-out spindle-vfd.speed-command <= spindle.0.speed-out-abs
 
 # connect the spindle at speed to the VFD
-net vfd-at-speed spindle.0.at-speed <= spindle-vfd.at-speed
+net vfd-at-speed spindle-vfd.at-speed <= spindle.0.at-speed
