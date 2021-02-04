@@ -331,7 +331,7 @@ int main(int argc, char **argv)
             case 'd':  /* Device name, default /dev/ttyUSB0 */
                 /* Could check the device name here, but we'll leave it to the library open */
                 if (strlen(optarg) > FILENAME_MAX) {
-                    printf("ERROR: device node name is to long: %s\n", optarg);
+                    fprintf(stderr, "ERROR: device node name is to long: %s\n", optarg);
                     retval = -1;
                     goto out_noclose;
                 }
@@ -341,7 +341,7 @@ int main(int argc, char **argv)
             /* Module base name */
             case 'n':
                 if (strlen(optarg) > HAL_NAME_LEN - 20) {
-                    printf("ERROR: HAL module name to long: %s\n", optarg);
+                    fprintf(stderr, "ERROR: HAL module name to long: %s\n", optarg);
                     retval = -1;
                     goto out_noclose;
                 }
@@ -351,7 +351,7 @@ int main(int argc, char **argv)
             case 'p':  /* Parity, should be a string like "even", "odd" or "none" */
                 argindex = match_string(optarg, paritystrings);
                 if (argindex < 0) {
-                    printf("ERROR: invalid parity: %s\n", optarg);
+                    fprintf(stderr, "ERROR: invalid parity: %s\n", optarg);
                     retval = -1;
                     goto out_noclose;
                 }
@@ -361,7 +361,7 @@ int main(int argc, char **argv)
             case 'r':  /* Baud rate, defaults to 19200 */
                 argindex = match_string(optarg, ratestrings);
                 if (argindex < 0) {
-                    printf("ERROR: invalid baud rate: %s\n", optarg);
+                    fprintf(stderr, "ERROR: invalid baud rate: %s\n", optarg);
                     retval = -1;
                     goto out_noclose;
                 }
@@ -371,7 +371,7 @@ int main(int argc, char **argv)
             case 't':  /* Target number (MODBUS ID), default 1 */
                 argvalue = strtol(optarg, &endarg, 10);
                 if ((*endarg != '\0') || (argvalue < 1) || (argvalue > 31)) {
-                    printf("ERROR: invalid target number: %s\n", optarg);
+                    fprintf(stderr, "ERROR: invalid target number: %s\n", optarg);
                     retval = -1;
                     goto out_noclose;
                 }
@@ -381,7 +381,7 @@ int main(int argc, char **argv)
             case 'S':
                 spindle_max_speed = strtof(optarg, &endarg);
                 if ((*endarg != '\0') || (spindle_max_speed == 0.0)) {
-                    printf("%s: ERROR: invalid spindle max speed: %s\n", modname, optarg);
+                    fprintf(stderr, "%s: ERROR: invalid spindle max speed: %s\n", modname, optarg);
                     exit(1);
                 }
                 break;
@@ -389,7 +389,7 @@ int main(int argc, char **argv)
             case 'F':
                 max_freq = strtof(optarg, &endarg);
                 if ((*endarg != '\0') || (max_freq == 0.0)) {
-                    printf("%s: ERROR: invalid max freq: %s\n", modname, optarg);
+                    fprintf(stderr, "%s: ERROR: invalid max freq: %s\n", modname, optarg);
                     exit(1);
                 }
                 break;
@@ -411,7 +411,7 @@ int main(int argc, char **argv)
     }
 
     if (max_freq < 0) {
-        printf("%s: max frequency (%f) must be more than 0\n", modname, max_freq);
+        fprintf(stderr, "%s: ERROR: max frequency (%f) must be more than 0\n", modname, max_freq);
         exit(1);
     }
 
@@ -427,13 +427,13 @@ int main(int argc, char **argv)
     /* Assume 19200 bps 8-N-1 serial setting, device 1 */
     mb_ctx = modbus_new_rtu(device, baud, parity, bits, stopbits);
     if (mb_ctx == NULL) {
-        printf("%s: ERROR: Couldn't open modbus serial device: %s\n", modname, modbus_strerror(errno));
+        fprintf(stderr, "%s: ERROR: Couldn't open modbus serial device: %s\n", modname, modbus_strerror(errno));
         goto out_noclose;
     }
 
     retval = modbus_connect(mb_ctx);
     if (retval != 0) {
-        printf("%s: ERROR: Couldn't open serial device: %s\n", modname, modbus_strerror(errno));
+        fprintf(stderr, "%s: ERROR: Couldn't open serial device: %s\n", modname, modbus_strerror(errno));
         goto out_noclose;
     }
 
@@ -444,14 +444,14 @@ int main(int argc, char **argv)
     /* Create HAL component */
     hal_comp_id = hal_init(modname);
     if (hal_comp_id < 0) {
-        printf("%s: ERROR: hal_init failed\n", modname);
+        fprintf(stderr, "%s: ERROR: hal_init failed\n", modname);
         retval = hal_comp_id;
         goto out_close;
     }
 
     haldata = (haldata_t *)hal_malloc(sizeof(haldata_t));
     if (haldata == NULL) {
-        printf("%s: ERROR: unable to allocate shared memory\n", modname);
+        fprintf(stderr, "%s: ERROR: unable to allocate shared memory\n", modname);
         retval = -1;
         goto out_closeHAL;
     }
