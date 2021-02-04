@@ -81,7 +81,8 @@ char *modname = "nowforever_vfd";
 float spindle_max_speed = 24000.0;
 float max_freq = 400.0;
 
-int read_data(modbus_t *mb_ctx, targetdata_t *targetdata, haldata_t *hal_data_block) {
+int read_data(modbus_t *mb_ctx, targetdata_t *targetdata, haldata_t *hal_data_block)
+{
     uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
     int retval;
 
@@ -120,7 +121,8 @@ int read_data(modbus_t *mb_ctx, targetdata_t *targetdata, haldata_t *hal_data_bl
     return retval;
 }
 
-int set_motor(modbus_t *mb_ctx, haldata_t *haldata) {
+int set_motor(modbus_t *mb_ctx, haldata_t *haldata)
+{
     uint16_t val;
     int retries;
 
@@ -156,7 +158,8 @@ int set_motor(modbus_t *mb_ctx, haldata_t *haldata) {
 }
 
 /* Write to vfd and set HAL pins */
-void write_data(modbus_t *mb_ctx, haldata_t *haldata) {
+void write_data(modbus_t *mb_ctx, haldata_t *haldata)
+{
     int retval;
     int retries;
     hal_float_t hzcalc;
@@ -236,11 +239,13 @@ static char paritychars[] = {'E', 'O', 'N'};
 
 static char *ratestrings[] = {"2400", "4800", "9600", "19200", "38400", NULL};
 
-static void quit(int sig) {
+static void quit(int sig)
+{
     done = 1;
 }
 
-int match_string(char *string, char **matches) {
+int match_string(char *string, char **matches)
+{
     int len, which, match;
     which = 0;
     match = -1;
@@ -256,7 +261,8 @@ int match_string(char *string, char **matches) {
     return match;
 }
 
-void usage(int argc, char **argv) {
+void usage(int argc, char **argv)
+{
     printf("Usage: %s [ARGUMENTS]\n", argv[0]);
     printf("\n");
     printf("This program interfaces the Nowforever D100/E100 VFD to the LinuxCNC HAL.\n");
@@ -287,7 +293,8 @@ void usage(int argc, char **argv) {
     printf("       Show this help.\n");
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     char *device;
     int baud;
     int bits;
