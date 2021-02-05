@@ -32,15 +32,13 @@
                                         /* Bit 3: 1 = fault reset 0 = no reset */
 #define VFD_FREQUENCY           0x0901  /* Write frequency in 0.01 Hz steps */
 
-typedef struct {
+struct targetdata {
     int target;
     int read_reg_start;
     int read_reg_count;
-} targetdata_t;
+};
 
-targetdata_t targetdata;
-
-typedef struct {
+struct haldata {
     /* Read pin from VFD, (inverter running state) */
     hal_s32_t       *inverter_status;
     hal_float_t     *freq_cmd;
@@ -68,10 +66,7 @@ typedef struct {
     hal_float_t     period;
     hal_s32_t       modbus_errors;
     hal_s32_t       retval;
-} haldata_t;
-
-haldata_t *haldata;
-
+};
 
 int hal_comp_id;
 
@@ -81,7 +76,8 @@ char *modname = "nowforever_vfd";
 float spindle_max_speed = 24000.0;
 float max_freq = 400.0;
 
-int read_data(modbus_t *mb_ctx, targetdata_t *targetdata, haldata_t *hal_data_block)
+int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
+              struct haldata *hal_data_block)
 {
     uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
     int retval;
@@ -121,7 +117,7 @@ int read_data(modbus_t *mb_ctx, targetdata_t *targetdata, haldata_t *hal_data_bl
     return retval;
 }
 
-int set_motor(modbus_t *mb_ctx, haldata_t *haldata)
+int set_motor(modbus_t *mb_ctx, struct haldata *haldata)
 {
     uint16_t val;
     int retries;
@@ -158,7 +154,7 @@ int set_motor(modbus_t *mb_ctx, haldata_t *haldata)
 }
 
 /* Write to vfd and set HAL pins */
-void write_data(modbus_t *mb_ctx, haldata_t *haldata)
+void write_data(modbus_t *mb_ctx, struct haldata *haldata)
 {
     int retval;
     int retries;
@@ -295,6 +291,10 @@ void usage(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+    struct haldata *haldata;
+    struct targetdata targetdata;
+    struct timespec period_timespec;
+
     char *device;
     int baud;
     int bits;
@@ -305,7 +305,6 @@ int main(int argc, char **argv)
     int retval = 0;
     modbus_t *mb_ctx;
     int target;
-    struct timespec period_timespec;
     char *endarg;
     int opt;
     int argindex, argvalue;
@@ -449,7 +448,7 @@ int main(int argc, char **argv)
         goto out_close;
     }
 
-    haldata = (haldata_t *)hal_malloc(sizeof(haldata_t));
+    haldata = (struct haldata *)hal_malloc(sizeof(struct haldata));
     if (haldata == NULL) {
         fprintf(stderr, "%s: ERROR: unable to allocate shared memory\n", modname);
         retval = -1;
