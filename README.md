@@ -28,3 +28,6 @@ and pins which is used with LinuxCNC.
 the pins in LinuxCNC. The **custom.hal** file can be copied directly into your
 LinuxCNC machine config directory.
 
+## Licence
+This software is released under the **GPLv2** license. See the file COPYING
+for more details.
