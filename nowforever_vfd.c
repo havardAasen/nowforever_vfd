@@ -121,7 +121,7 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
     return retval;
 }
 
-int set_motor(modbus_t *mb_ctx, struct haldata *haldata)
+static int set_vfd_state(modbus_t *mb_ctx, struct haldata *haldata)
 {
     uint16_t val;
     int retries;
@@ -177,8 +177,6 @@ static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
     int retries;
     uint16_t freq;
 
-    set_motor(mb_ctx, haldata);
-
     /* Ensure frequency is a positive number */
     freq = abs((int) *haldata->speed_cmd * freq_calc * 100);
 
@@ -210,6 +208,7 @@ static void write_data(modbus_t *mb_ctx, struct haldata *haldata)
     /* Calculate frequency */
     hzcalc = max_freq / spindle_max_speed;
 
+    set_vfd_state(mb_ctx, haldata);
     set_vfd_freq(mb_ctx, haldata, hzcalc);
 
     if (*haldata->output_freq == 0) {
