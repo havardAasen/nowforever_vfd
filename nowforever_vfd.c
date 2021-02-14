@@ -154,42 +154,63 @@ int set_motor(modbus_t *mb_ctx, struct haldata *haldata)
     return -1;
 }
 
-/* Write to vfd and set HAL pins */
-void write_data(modbus_t *mb_ctx, struct haldata *haldata)
+/**
+ * set_vfd_freq - Send new frequency to vfd.
+ * @mb_ctx: modbus context
+ * @haldata: signals to and from LinuxCNC
+ * @freq_calc: calculated value, based on @max_freq and @spindle_max_speed
+ *
+ * If the new frequency is different from the current output frequency, send
+ * the new frequency to vfd. If the frequency is identical, do nothing.
+ *
+ * Ensures the value sent to vfd is a positive number. Ensures that the
+ * frequency sent to vfd is never larger than @max_freq (default: 400.0).
+ * @maq_freq can be changed with the 'F' flag.
+ *
+ * Return:
+ * 0 On success, or when it is not needed to write data. Otherwise it
+ * shall return -1
+ */
+static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
+                        hal_float_t freq_calc)
 {
-    int retval;
     int retries;
-    hal_float_t hzcalc;
     uint16_t freq;
 
     set_motor(mb_ctx, haldata);
 
-    /* Calculate frequency and sets it to be an absolute value */
-    hzcalc = max_freq / spindle_max_speed;
-    freq = abs((int) *haldata->speed_cmd * hzcalc * 100);
+    /* Ensure frequency is a positive number */
+    freq = abs((int) *haldata->speed_cmd * freq_calc * 100);
 
     /* Cap at max frequency */
     if (freq > max_freq * 100) {
         freq = max_freq * 100;
     }
 
-    if (freq != *haldata->output_freq) {
-        for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
-            retval = modbus_write_registers(
-                    mb_ctx,
-                    VFD_FREQUENCY,
-                    0x01,
-                    &freq);
-            if (retval != 1) {
-                fprintf(stderr, "%s: error writing %u to register 0x%04x: %s\n",
-                        __func__,
-                        freq,
-                        VFD_FREQUENCY,
-                        modbus_strerror(errno));
-                haldata->modbus_errors++;
-            }
-        }
+    if (freq == *haldata->output_freq) {
+        return 0;
     }
+
+    for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
+        if (modbus_write_registers(mb_ctx, VFD_FREQUENCY, 0x01, &freq) == 1) {
+            return 0;
+        }
+        fprintf(stderr, "%s: error writing %u to register 0x%04x: %s\n",
+                __func__, freq, VFD_FREQUENCY, modbus_strerror(errno));
+        haldata->modbus_errors++;
+    }
+    return -1;
+}
+
+/* Write to vfd and set HAL pins */
+static void write_data(modbus_t *mb_ctx, struct haldata *haldata)
+{
+    hal_float_t hzcalc;
+
+    /* Calculate frequency */
+    hzcalc = max_freq / spindle_max_speed;
+
+    set_vfd_freq(mb_ctx, haldata, hzcalc);
 
     if (*haldata->output_freq == 0) {
         *haldata->is_stopped = 1;
