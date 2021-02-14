@@ -94,7 +94,7 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
     }
 
     retval = modbus_read_registers(mb_ctx, targetdata->read_reg_start,
-                                targetdata->read_reg_count, receive_data);
+                                   targetdata->read_reg_count, receive_data);
 
     if (retval == targetdata->read_reg_count) {
         retval = 0;
@@ -142,10 +142,7 @@ int set_motor(modbus_t *mb_ctx, struct haldata *haldata)
             return 0;
         }
         fprintf(stderr, "%s: error writing %u to register 0x%04x: %s\n",
-                __func__,
-                val,
-                VFD_INSTRUCTION,
-                modbus_strerror(errno));
+                __func__, val, VFD_INSTRUCTION, modbus_strerror(errno));
         haldata->modbus_errors++;
     }
     return -1;
@@ -328,7 +325,8 @@ int main(int argc, char **argv)
             case 'd':  /* Device name, default /dev/ttyUSB0 */
                 /* Could check the device name here, but we'll leave it to the library open */
                 if (strlen(optarg) > FILENAME_MAX) {
-                    fprintf(stderr, "ERROR: device node name is to long: %s\n", optarg);
+                    fprintf(stderr, "ERROR: device node name is to long: %s\n",
+                            optarg);
                     retval = -1;
                     goto out_noclose;
                 }
@@ -338,7 +336,8 @@ int main(int argc, char **argv)
             /* Module base name */
             case 'n':
                 if (strlen(optarg) > HAL_NAME_LEN - 20) {
-                    fprintf(stderr, "ERROR: HAL module name to long: %s\n", optarg);
+                    fprintf(stderr, "ERROR: HAL module name to long: %s\n",
+                            optarg);
                     retval = -1;
                     goto out_noclose;
                 }
@@ -368,7 +367,8 @@ int main(int argc, char **argv)
             case 't':  /* Target number (MODBUS ID), default 1 */
                 argvalue = strtol(optarg, &endarg, 10);
                 if ((*endarg != '\0') || (argvalue < 1) || (argvalue > 31)) {
-                    fprintf(stderr, "ERROR: invalid target number: %s\n", optarg);
+                    fprintf(stderr, "ERROR: invalid target number: %s\n",
+                            optarg);
                     retval = -1;
                     goto out_noclose;
                 }
@@ -378,7 +378,8 @@ int main(int argc, char **argv)
             case 'S':
                 spindle_max_speed = strtof(optarg, &endarg);
                 if ((*endarg != '\0') || (spindle_max_speed == 0.0)) {
-                    fprintf(stderr, "%s: ERROR: invalid spindle max speed: %s\n", modname, optarg);
+                    fprintf(stderr, "%s: ERROR: invalid spindle max speed: %s\n",
+                            modname, optarg);
                     exit(1);
                 }
                 break;
@@ -386,7 +387,8 @@ int main(int argc, char **argv)
             case 'F':
                 max_freq = strtof(optarg, &endarg);
                 if ((*endarg != '\0') || (max_freq == 0.0)) {
-                    fprintf(stderr, "%s: ERROR: invalid max freq: %s\n", modname, optarg);
+                    fprintf(stderr, "%s: ERROR: invalid max freq: %s\n",
+                            modname, optarg);
                     exit(1);
                 }
                 break;
@@ -408,7 +410,8 @@ int main(int argc, char **argv)
     }
 
     if (max_freq < 0) {
-        fprintf(stderr, "%s: ERROR: max frequency (%f) must be more than 0\n", modname, max_freq);
+        fprintf(stderr, "%s: ERROR: max frequency (%f) must be more than 0\n",
+                modname, max_freq);
         exit(1);
     }
 
@@ -424,13 +427,15 @@ int main(int argc, char **argv)
     /* Assume 19200 bps 8-N-1 serial setting, device 1 */
     mb_ctx = modbus_new_rtu(device, baud, parity, bits, stopbits);
     if (mb_ctx == NULL) {
-        fprintf(stderr, "%s: ERROR: Couldn't open modbus serial device: %s\n", modname, modbus_strerror(errno));
+        fprintf(stderr, "%s: ERROR: Couldn't open modbus serial device: %s\n",
+                modname, modbus_strerror(errno));
         goto out_noclose;
     }
 
     retval = modbus_connect(mb_ctx);
     if (retval != 0) {
-        fprintf(stderr, "%s: ERROR: Couldn't open serial device: %s\n", modname, modbus_strerror(errno));
+        fprintf(stderr, "%s: ERROR: Couldn't open serial device: %s\n",
+                modname, modbus_strerror(errno));
         goto out_noclose;
     }
 
@@ -448,69 +453,90 @@ int main(int argc, char **argv)
 
     haldata = (struct haldata *)hal_malloc(sizeof(struct haldata));
     if (haldata == NULL) {
-        fprintf(stderr, "%s: ERROR: unable to allocate shared memory\n", modname);
+        fprintf(stderr, "%s: ERROR: unable to allocate shared memory\n",
+                modname);
         retval = -1;
         goto out_closeHAL;
     }
 
-    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->inverter_status), hal_comp_id, "%s.inverter-status", modname);
+    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->inverter_status),
+                              hal_comp_id, "%s.inverter-status", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->freq_cmd), hal_comp_id, "%s.frequency-command", modname);
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->freq_cmd),
+                                hal_comp_id, "%s.frequency-command", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_freq), hal_comp_id, "%s.frequency-out", modname);
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_freq),
+                                hal_comp_id, "%s.frequency-out", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_current), hal_comp_id, "%s.output-current", modname);
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_current),
+                                hal_comp_id, "%s.output-current", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_volt), hal_comp_id, "%s.output-volt", modname);
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_volt),
+                                hal_comp_id, "%s.output-volt", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->dc_bus_volt), hal_comp_id, "%s.DC-bus-volt", modname);
+    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->dc_bus_volt),
+                              hal_comp_id, "%s.DC-bus-volt", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->motor_load), hal_comp_id, "%s.load-percentage", modname);
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->motor_load),
+                                hal_comp_id, "%s.load-percentage", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->inverter_temp), hal_comp_id, "%s.inverter-temp", modname);
+    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->inverter_temp),
+                              hal_comp_id, "%s.inverter-temp", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->vfd_error), hal_comp_id, "%s.vfd-error", modname);
+    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->vfd_error),
+                              hal_comp_id, "%s.vfd-error", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->at_speed), hal_comp_id, "%s.at-speed", modname);
+    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->at_speed),
+                              hal_comp_id, "%s.at-speed", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->is_stopped), hal_comp_id, "%s.is-stopped", modname);
+    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->is_stopped),
+                              hal_comp_id, "%s.is-stopped", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->speed_fb), hal_comp_id, "%s.spindle-speed-fb", modname);
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->speed_fb),
+                                hal_comp_id, "%s.spindle-speed-fb", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_on), hal_comp_id, "%s.spindle-on", modname);
+    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_on),
+                              hal_comp_id, "%s.spindle-on", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_fwd), hal_comp_id, "%s.spindle-fwd", modname);
+    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_fwd),
+                              hal_comp_id, "%s.spindle-fwd", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_rev), hal_comp_id, "%s.spindle-rev", modname);
+    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_rev),
+                              hal_comp_id, "%s.spindle-rev", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_pin_float_newf(HAL_IN, &(haldata->speed_cmd), hal_comp_id, "%s.speed-command", modname);
+    retval = hal_pin_float_newf(HAL_IN, &(haldata->speed_cmd),
+                                hal_comp_id, "%s.speed-command", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_param_float_newf(HAL_RW, &(haldata->speed_tolerance), hal_comp_id, "%s.tolerance", modname);
+    retval = hal_param_float_newf(HAL_RW, &(haldata->speed_tolerance),
+                                  hal_comp_id, "%s.tolerance", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_param_float_newf(HAL_RW, &(haldata->period), hal_comp_id, "%s.period-seconds", modname);
+    retval = hal_param_float_newf(HAL_RW, &(haldata->period),
+                                  hal_comp_id, "%s.period-seconds", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_param_s32_newf(HAL_RO, &(haldata->modbus_errors), hal_comp_id, "%s.modbus-errors", modname);
+    retval = hal_param_s32_newf(HAL_RO, &(haldata->modbus_errors),
+                                hal_comp_id, "%s.modbus-errors", modname);
     if (retval != 0) goto out_closeHAL;
 
-    retval = hal_param_s32_newf(HAL_RO, &(haldata->retval), hal_comp_id, "%s.retval", modname);
+    retval = hal_param_s32_newf(HAL_RO, &(haldata->retval),
+                                hal_comp_id, "%s.retval", modname);
     if (retval != 0) goto out_closeHAL;
 
     /* Make default data match what we expect to use */
