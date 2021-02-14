@@ -99,16 +99,14 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
     if (retval == targetdata->read_reg_count) {
         retval = 0;
         hal_data_block->retval = retval;
-        if (retval == 0) {
-            *(hal_data_block->inverter_status) = receive_data[0];
-            *(hal_data_block->freq_cmd) = receive_data[1] * 0.01;
-            *(hal_data_block->output_freq) = receive_data[2] * 0.01;
-            *(hal_data_block->output_current) = receive_data[3] * 0.1;
-            *(hal_data_block->output_volt) = receive_data[4] * 0.1;
-            *(hal_data_block->dc_bus_volt) = receive_data[5];
-            *(hal_data_block->motor_load) = receive_data[6] * 0.1;
-            *(hal_data_block->inverter_temp) = receive_data[7];
-        }
+        *(hal_data_block->inverter_status) = receive_data[0];
+        *(hal_data_block->freq_cmd) = receive_data[1] * 0.01;
+        *(hal_data_block->output_freq) = receive_data[2] * 0.01;
+        *(hal_data_block->output_current) = receive_data[3] * 0.1;
+        *(hal_data_block->output_volt) = receive_data[4] * 0.1;
+        *(hal_data_block->dc_bus_volt) = receive_data[5];
+        *(hal_data_block->motor_load) = receive_data[6] * 0.1;
+        *(hal_data_block->inverter_temp) = receive_data[7];
     } else {
         hal_data_block->retval = retval;
         hal_data_block->modbus_errors++;
