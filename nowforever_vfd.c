@@ -76,8 +76,8 @@ char *modname = "nowforever_vfd";
 float spindle_max_speed = 24000.0;
 float max_freq = 400.0;
 
-int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
-              struct haldata *hal_data_block)
+static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
+                     struct haldata *hal_data_block)
 {
     uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
     int retval;
