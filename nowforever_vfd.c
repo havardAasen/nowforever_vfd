@@ -285,7 +285,7 @@ void usage(int argc, char **argv)
     printf("This program interfaces the Nowforever D100/E100 VFD to the LinuxCNC HAL.\n");
     printf("\n");
     printf("Optional arguments:\n");
-    printf("   -d, -device <path> (default: /dev/ttyUSB0)\n");
+    printf("   -d, --device <path> (default: /dev/ttyUSB0)\n");
     printf("       Set the name of the serial device to use\n");
     printf("   -n, --name <string> (default: nowforever_vfd)\n");
     printf("       Set the name of the HAL module.  The HAL comp name will be set to <string>, and all pin\n");
