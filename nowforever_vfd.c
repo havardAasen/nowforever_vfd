@@ -26,11 +26,17 @@
 
 #define START_REGISTER_R        0x0500
 #define NUM_REGISTER_R          8
-#define VFD_INSTRUCTION         0x0900  /* Bit 0: 1 = run, 0 = stop */
-                                        /* Bit 1: 1 = reverse, 0 = forward */
-                                        /* Bit 2: 1 = JOG, 0 = stop JOG */
-                                        /* Bit 3: 1 = fault reset 0 = no reset */
-#define VFD_FREQUENCY           0x0901  /* Write frequency in 0.01 Hz steps */
+
+/*
+ * Bit 0: 1 = run, 0 = stop
+ * Bit 1: 1 = reverse, 0 = forward
+ * Bit 2: 1 = JOG, 0 = stop JOG
+ * Bit 3: 1 = fault reset 0 = no reset
+ */
+#define VFD_INSTRUCTION         0x0900
+
+/* Write frequency in 0.01 Hz steps */
+#define VFD_FREQUENCY           0x0901
 
 struct targetdata {
     int target;
@@ -322,8 +328,12 @@ int main(int argc, char **argv)
     /* Process command line options */
     while ((opt = getopt_long(argc, argv, option_string, long_options, NULL)) != -1) {
         switch (opt) {
-            case 'd':  /* Device name, default /dev/ttyUSB0 */
-                /* Could check the device name here, but we'll leave it to the library open */
+            /* Device name, default /dev/ttyUSB0 */
+            case 'd':
+                /*
+                 * Could check the device name here, but we'll leave it to
+                 * the library open
+                 */
                 if (strlen(optarg) > FILENAME_MAX) {
                     fprintf(stderr, "ERROR: device node name is to long: %s\n",
                             optarg);
@@ -344,7 +354,8 @@ int main(int argc, char **argv)
                 modname = strdup(optarg);
                 break;
 
-            case 'p':  /* Parity, should be a string like "even", "odd" or "none" */
+            /* Parity, should be a string like "even", "odd" or "none" */
+            case 'p':
                 argindex = match_string(optarg, paritystrings);
                 if (argindex < 0) {
                     fprintf(stderr, "ERROR: invalid parity: %s\n", optarg);
@@ -354,7 +365,8 @@ int main(int argc, char **argv)
                 parity = paritychars[argindex];
                 break;
 
-            case 'r':  /* Baud rate, defaults to 19200 */
+            /* Baud rate, defaults to 19200 */
+            case 'r':
                 argindex = match_string(optarg, ratestrings);
                 if (argindex < 0) {
                     fprintf(stderr, "ERROR: invalid baud rate: %s\n", optarg);
@@ -364,7 +376,8 @@ int main(int argc, char **argv)
                 baud = atoi(ratestrings[argindex]);
                 break;
 
-            case 't':  /* Target number (MODBUS ID), default 1 */
+            /* Target number (MODBUS ID), default 1 */
+            case 't':
                 argvalue = strtol(optarg, &endarg, 10);
                 if ((*endarg != '\0') || (argvalue < 1) || (argvalue > 31)) {
                     fprintf(stderr, "ERROR: invalid target number: %s\n",
@@ -418,9 +431,11 @@ int main(int argc, char **argv)
     printf("%s: device='%s', baud='%d', bits=%d, parity='%c', stopbits=%d, address=%d\n",
             modname, device, baud, bits, parity, stopbits, target);
 
-    /* Point TERM and INT signals at our quit function. */
-    /* If a signal is received between here and the main loop, it should prevent */
-    /* some initialization from happening. */
+    /*
+     * Point TERM and INT signals at our quit function.
+     * If a signal is received between here and the main loop, it should
+     * prevent some initialization from happening.
+     */
     signal(SIGINT, quit);
     signal(SIGTERM, quit);
 
