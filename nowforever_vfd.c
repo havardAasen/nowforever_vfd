@@ -71,7 +71,6 @@ struct haldata {
     hal_float_t     speed_tolerance;
     hal_float_t     period;
     hal_s32_t       modbus_errors;
-    hal_s32_t       retval;
 };
 
 int hal_comp_id;
@@ -104,7 +103,6 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
 
     if (retval == targetdata->read_reg_count) {
         retval = 0;
-        hal_data_block->retval = retval;
         *(hal_data_block->inverter_status) = receive_data[0];
         *(hal_data_block->freq_cmd) = receive_data[1] * 0.01;
         *(hal_data_block->output_freq) = receive_data[2] * 0.01;
@@ -114,7 +112,6 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
         *(hal_data_block->motor_load) = receive_data[6] * 0.1;
         *(hal_data_block->inverter_temp) = receive_data[7];
     } else {
-        hal_data_block->retval = retval;
         hal_data_block->modbus_errors++;
         retval = -1;
     }
@@ -568,10 +565,6 @@ int main(int argc, char **argv)
 
     retval = hal_param_s32_newf(HAL_RO, &(haldata->modbus_errors),
                                 hal_comp_id, "%s.modbus-errors", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_param_s32_newf(HAL_RO, &(haldata->retval),
-                                hal_comp_id, "%s.retval", modname);
     if (retval != 0) goto out_closeHAL;
 
     /* Make default data match what we expect to use */
