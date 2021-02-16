@@ -112,6 +112,9 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
         *(hal_data_block->motor_load) = receive_data[6] * 0.1;
         *(hal_data_block->inverter_temp) = receive_data[7];
     } else {
+        fprintf(stderr, "%s: ERROR reading data for %d registers, from register 0x%04x: %s\n",
+                modname, targetdata->read_reg_count, targetdata->read_reg_start,
+                modbus_strerror(errno));
         hal_data_block->modbus_errors++;
         retval = -1;
     }
