@@ -144,7 +144,7 @@ static int set_vfd_state(modbus_t *mb_ctx, struct haldata *haldata)
         if (modbus_write_registers(mb_ctx, VFD_INSTRUCTION, 0x01, &val) == 1) {
             return 0;
         }
-        fprintf(stderr, "%s: error writing %u to register 0x%04x: %s\n",
+        fprintf(stderr, "%s: ERROR writing %u to register 0x%04x: %s\n",
                 modname, val, VFD_INSTRUCTION, modbus_strerror(errno));
         haldata->modbus_errors++;
     }
@@ -190,7 +190,7 @@ static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
         if (modbus_write_registers(mb_ctx, VFD_FREQUENCY, 0x01, &freq) == 1) {
             return 0;
         }
-        fprintf(stderr, "%s: error writing %u to register 0x%04x: %s\n",
+        fprintf(stderr, "%s: ERROR writing %u to register 0x%04x: %s\n",
                 modname, freq, VFD_FREQUENCY, modbus_strerror(errno));
         haldata->modbus_errors++;
     }
