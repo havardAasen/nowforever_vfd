@@ -240,7 +240,7 @@ static void quit(int sig)
     done = 1;
 }
 
-int match_string(char *string, char **matches)
+static int match_string(char *string, char **matches)
 {
     int len, which, match;
     which = 0;
@@ -257,7 +257,7 @@ int match_string(char *string, char **matches)
     return match;
 }
 
-void usage(int argc, char **argv)
+static void usage(int argc, char **argv)
 {
     printf("Usage: %s [ARGUMENTS]\n", argv[0]);
     printf("\n");
