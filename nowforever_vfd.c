@@ -379,7 +379,7 @@ int main(int argc, char **argv)
 
             case 'S':
                 spindle_max_speed = strtod(optarg, &endarg);
-                if ((*endarg != '\0') || (spindle_max_speed == 0.0)) {
+                if ((*endarg != '\0') || (spindle_max_speed <= 0.0)) {
                     fprintf(stderr, "%s: ERROR: invalid spindle max speed: %s\n", modname, optarg);
                     retval = -1;
                     goto out_noclose;
@@ -388,7 +388,7 @@ int main(int argc, char **argv)
 
             case 'F':
                 max_freq = strtod(optarg, &endarg);
-                if ((*endarg != '\0') || (max_freq == 0.0)) {
+                if ((*endarg != '\0') || (max_freq <= 0.0)) {
                     fprintf(stderr, "%s: ERROR: invalid max freq: %s\n", modname, optarg);
                     retval = -1;
                     goto out_noclose;
