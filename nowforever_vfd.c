@@ -261,9 +261,10 @@ static void quit(int sig)
     done = 1;
 }
 
-int match_string(char *string, char **matches)
+static int match_string(char *string, char **matches)
 {
-    int len, which, match;
+    int which, match;
+    unsigned int len;
     which = 0;
     match = -1;
     if ((matches == NULL) || (string == NULL)) return -1;
@@ -278,7 +279,7 @@ int match_string(char *string, char **matches)
     return match;
 }
 
-void usage(int argc, char **argv)
+static void usage(int argc, char **argv)
 {
     printf("Usage: %s [ARGUMENTS]\n", argv[0]);
     printf("\n");
@@ -409,20 +410,22 @@ int main(int argc, char **argv)
                 break;
 
             case 'S':
-                spindle_max_speed = strtof(optarg, &endarg);
-                if ((*endarg != '\0') || (spindle_max_speed == 0.0)) {
+                spindle_max_speed = strtod(optarg, &endarg);
+                if ((*endarg != '\0') || (spindle_max_speed <= 0.0)) {
                     fprintf(stderr, "%s: ERROR: invalid spindle max speed: %s\n",
                             modname, optarg);
-                    exit(1);
+                    retval = -1;
+                    goto out_noclose;
                 }
                 break;
 
             case 'F':
-                max_freq = strtof(optarg, &endarg);
-                if ((*endarg != '\0') || (max_freq == 0.0)) {
-                    fprintf(stderr, "%s: ERROR: invalid max freq: %s\n",
+                max_freq = strtod(optarg, &endarg);
+                if ((*endarg != '\0') || (max_freq <= 0.0)) {
+                    fprintf(stderr, "%s: ERROR: invalid max freq: %s\n"
                             modname, optarg);
-                    exit(1);
+                    retval = -1;
+                    goto out_noclose;
                 }
                 break;
 

@@ -61,8 +61,9 @@ Show options and exit.
 .PP
 .TP
 .BI -F\ --max-frequency " <f>"
-(default 400.0) This is the maximum output frequency of the VFD in Hz. It should match
-the register P0-007 set on the VFD.
+(default 400.0) This is the maximum output frequency of the VFD in Hz. It
+should match the register P0-007 set on the VFD. Values equal to 0 and
+below is not allowed.
 .PP
 .TP
 .BI -n\ --name " <string>"
@@ -88,8 +89,8 @@ to be printed in hex on the terminal.
 .PP
 .TP
 .BI -S\ --spindle-max-speed " <f>"
-(default 24000.0) The motor's max speed in RPM. This must match the spindle speed
-at max frequency.
+(default 24000.0) The motor's max speed in RPM. This must match the spindle
+speed at max frequency. Values equal to 0 and below is not allowed.
 .PP
 .TP
 .BI -t\ --target " <n>"
