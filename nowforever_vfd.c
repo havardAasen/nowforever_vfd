@@ -242,7 +242,8 @@ static void quit(int sig)
 
 static int match_string(char *string, char **matches)
 {
-    int len, which, match;
+    int which, match;
+    unsigned int len;
     which = 0;
     match = -1;
     if ((matches == NULL) || (string == NULL)) return -1;
