@@ -185,7 +185,8 @@ static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
         freq = max_freq * 100;
     }
 
-    if (freq == *haldata->output_freq) {
+    /* Cast to int, to compare values. */
+    if (freq == (int) (*haldata->output_freq * 100)) {
         return 0;
     }
 
