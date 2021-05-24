@@ -445,12 +445,6 @@ int main(int argc, char **argv)
         }
     }
 
-    if (max_freq < 0) {
-        fprintf(stderr, "%s: ERROR: max frequency (%f) must be more than 0\n",
-                modname, max_freq);
-        exit(1);
-    }
-
     printf("%s: device='%s', baud='%d', bits=%d, parity='%c', stopbits=%d, address=%d\n",
             modname, device, baud, bits, parity, stopbits, target);
 
