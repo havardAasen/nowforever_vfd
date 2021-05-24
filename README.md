@@ -36,7 +36,7 @@ that comes shipped with LinuxCNC.
 - Execute the steps in **Build and install**, ending with installing
   the binaries.
 - Open LinuxCNC and choose one of the sample configurations.
-  `Sample configuration -> sim -> axis`
+  `Sample Configurations -> sim -> axis`
   choose one of `axis`, `axis_9axis` or `axis_mm`.
 - Say yes to copy the files to your home folder.
 - Exit LinuxCNC
@@ -44,6 +44,6 @@ that comes shipped with LinuxCNC.
   configuration folder
 - In the configuration folder, edit the axis*.ini file you wish to use.
   It's three of these, but you only need to use one of them.
-- Go to `HAL` section and comment out `HALFILE sim_spindle_encoder.hal`.
-- Continuing in the `HAL` section, add `HALFILE custom.hal` as the last entry.
+- Go to `HAL` section and comment out `HALFILE = sim_spindle_encoder.hal`.
+- Continuing in the `HAL` section, add `HALFILE = custom.hal` as the last entry.
 
