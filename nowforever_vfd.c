@@ -422,7 +422,7 @@ int main(int argc, char **argv)
             case 'F':
                 max_freq = strtod(optarg, &endarg);
                 if ((*endarg != '\0') || (max_freq <= 0.0)) {
-                    fprintf(stderr, "%s: ERROR: invalid max freq: %s\n",
+                    fprintf(stderr, "%s: ERROR: invalid max frequency: %s\n",
                             modname, optarg);
                     retval = -1;
                     goto out_noclose;
