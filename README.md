@@ -47,3 +47,6 @@ that comes shipped with LinuxCNC.
 - Go to `HAL` section and comment out `HALFILE = sim_spindle_encoder.hal`.
 - Continuing in the `HAL` section, add `HALFILE = custom.hal` as the last entry.
 
+## Licence
+This software is released under the **GPLv2** license. See the file COPYING
+for more details.

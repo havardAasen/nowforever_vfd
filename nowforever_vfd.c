@@ -1,9 +1,28 @@
 /*
-    nowforever_vfd.c
-
-    This is a userspace program that interfaces the Nowforever D100/E100 VFD
-    to the LinuxCNC HAL, using RS485 ModBus RTU.
-*/
+ * nowforever_vfd.c
+ *
+ * This is a userspace program that interfaces the Nowforever D100/E100 VFD
+ * to the LinuxCNC HAL, using RS485 ModBus RTU.
+ *
+ * Copyright (C) 2020 Håvard Flaget Aasen <havard.flaget.aasen@gmail.com>
+ *
+ * Based on other drivers found in the LinuxCNC repository.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
 
 #include <errno.h>
 #include <getopt.h>
