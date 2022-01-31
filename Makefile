@@ -10,7 +10,7 @@ man1dir = $(mandir)/man1
 CC = gcc
 CFLAGS = -Wall -g -O
 ALL_CFLAGS = -O2 -D_FORTITY_SOURCE=2 -DRTAPI -I/usr/include/linuxcnc -I/usr/include/modbus $(CFLAGS)
-LDLIBS := -lmodbus -llinuxcnchal -lpthread -lm -lglib-2.0
+LDLIBS := -lmodbus -llinuxcnchal -lm
 LDFLAGS := -Wl,-z,now -Wl,-z,relro
 
 nowforever_vfd: nowforever_vfd.o
