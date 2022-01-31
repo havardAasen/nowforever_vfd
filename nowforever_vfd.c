@@ -631,6 +631,7 @@ out_close:
     modbus_close(mb_ctx);
     modbus_free(mb_ctx);
 out_noclose:
+    free(device);
+    free(modname);
     return retval;
 }
-
