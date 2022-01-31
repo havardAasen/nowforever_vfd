@@ -1,4 +1,4 @@
-default: nowforever_vfd
+all: nowforever_vfd
 
 prefix = /usr/local
 exec_prefix = $(prefix)
@@ -19,7 +19,7 @@ nowforever_vfd: nowforever_vfd.o
 %.o: %.c
 	$(CC) $(ALL_CFLAGS) -o $@ -c $<
 
-.PHONY: install clean distclean uninstall
+.PHONY: all install clean distclean uninstall
 
 install: nowforever_vfd
 	install -d -m 755 $(DESTDIR)$(bindir)
