@@ -93,13 +93,8 @@ struct haldata {
     hal_s32_t       modbus_errors;
 };
 
-int hal_comp_id;
-
 static int done;
 char *modname = "nowforever_vfd";
-
-float spindle_max_speed = 24000.0;
-float max_freq = 400.0;
 
 static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
                      struct haldata *hal_data_block)
@@ -192,7 +187,7 @@ static int set_vfd_state(modbus_t *mb_ctx, struct haldata *haldata)
  * shall return -1
  */
 static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
-                        hal_float_t freq_calc)
+                        hal_float_t freq_calc, float max_freq)
 {
     int retries;
     uint16_t freq;
@@ -222,15 +217,11 @@ static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
 }
 
 /* Write to vfd and set HAL pins */
-static void write_data(modbus_t *mb_ctx, struct haldata *haldata)
+static void write_data(modbus_t *mb_ctx, struct haldata *haldata,
+                       hal_float_t hzcalc, float max_freq)
 {
-    hal_float_t hzcalc;
-
-    /* Calculate frequency */
-    hzcalc = max_freq / spindle_max_speed;
-
     set_vfd_state(mb_ctx, haldata);
-    set_vfd_freq(mb_ctx, haldata, hzcalc);
+    set_vfd_freq(mb_ctx, haldata, hzcalc, max_freq);
 
     if (*haldata->output_freq == 0) {
         *haldata->is_stopped = 1;
@@ -348,6 +339,11 @@ int main(int argc, char **argv)
     int retval = 0;
     modbus_t *mb_ctx;
     int target;
+    int hal_comp_id;
+    float spindle_max_speed = 24000.0;
+    float max_freq = 400.0;
+    hal_float_t hzcalc;
+
     char *endarg;
     int opt;
     int argindex, argvalue;
@@ -610,6 +606,9 @@ int main(int argc, char **argv)
     /* Activate HAL component */
     hal_ready(hal_comp_id);
 
+    /* Calculate frequency */
+    hzcalc = max_freq / spindle_max_speed;
+
     while (done == 0) {
         /* Don't scan to fast, and not delay more than a few seconds */
         if (haldata->period < 0.001) haldata->period = 0.001;
@@ -619,7 +618,7 @@ int main(int argc, char **argv)
         nanosleep(&period_timespec, NULL);
 
         read_data(mb_ctx, &targetdata, haldata);
-        write_data(mb_ctx, haldata);
+        write_data(mb_ctx, haldata, hzcalc, max_freq);
     }
 
     /* TODO Add motor off */
