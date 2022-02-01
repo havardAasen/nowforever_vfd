@@ -323,6 +323,89 @@ static void usage(int argc, char **argv)
     printf("       Show this help.\n");
 }
 
+static int hal_setup(struct haldata *haldata, int hal_comp_id)
+{
+    int retval;
+
+    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->inverter_status),
+                              hal_comp_id, "%s.inverter-status", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->freq_cmd),
+                                hal_comp_id, "%s.frequency-command", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_freq),
+                                hal_comp_id, "%s.frequency-out", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_current),
+                                hal_comp_id, "%s.output-current", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_volt),
+                                hal_comp_id, "%s.output-volt", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->dc_bus_volt),
+                              hal_comp_id, "%s.DC-bus-volt", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->motor_load),
+                                hal_comp_id, "%s.load-percentage", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->inverter_temp),
+                              hal_comp_id, "%s.inverter-temp", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->vfd_error),
+                              hal_comp_id, "%s.vfd-error", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->at_speed),
+                              hal_comp_id, "%s.at-speed", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->is_stopped),
+                              hal_comp_id, "%s.is-stopped", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_float_newf(HAL_OUT, &(haldata->speed_fb),
+                                hal_comp_id, "%s.spindle-speed-fb", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_on),
+                              hal_comp_id, "%s.spindle-on", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_fwd),
+                              hal_comp_id, "%s.spindle-fwd", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_rev),
+                              hal_comp_id, "%s.spindle-rev", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_pin_float_newf(HAL_IN, &(haldata->speed_cmd),
+                                hal_comp_id, "%s.speed-command", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_param_float_newf(HAL_RW, &(haldata->speed_tolerance),
+                                  hal_comp_id, "%s.tolerance", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_param_float_newf(HAL_RW, &(haldata->period),
+                                  hal_comp_id, "%s.period-seconds", modname);
+    if (retval != 0) return retval;
+
+    retval = hal_param_s32_newf(HAL_RO, &(haldata->modbus_errors),
+                                hal_comp_id, "%s.modbus-errors", modname);
+    if (retval != 0) return retval;
+
+    return retval;
+}
+
 int main(int argc, char **argv)
 {
     struct haldata *haldata;
@@ -508,81 +591,10 @@ int main(int argc, char **argv)
         goto out_closeHAL;
     }
 
-    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->inverter_status),
-                              hal_comp_id, "%s.inverter-status", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->freq_cmd),
-                                hal_comp_id, "%s.frequency-command", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_freq),
-                                hal_comp_id, "%s.frequency-out", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_current),
-                                hal_comp_id, "%s.output-current", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_volt),
-                                hal_comp_id, "%s.output-volt", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->dc_bus_volt),
-                              hal_comp_id, "%s.DC-bus-volt", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->motor_load),
-                                hal_comp_id, "%s.load-percentage", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->inverter_temp),
-                              hal_comp_id, "%s.inverter-temp", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->vfd_error),
-                              hal_comp_id, "%s.vfd-error", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->at_speed),
-                              hal_comp_id, "%s.at-speed", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->is_stopped),
-                              hal_comp_id, "%s.is-stopped", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->speed_fb),
-                                hal_comp_id, "%s.spindle-speed-fb", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_on),
-                              hal_comp_id, "%s.spindle-on", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_fwd),
-                              hal_comp_id, "%s.spindle-fwd", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_rev),
-                              hal_comp_id, "%s.spindle-rev", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_pin_float_newf(HAL_IN, &(haldata->speed_cmd),
-                                hal_comp_id, "%s.speed-command", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_param_float_newf(HAL_RW, &(haldata->speed_tolerance),
-                                  hal_comp_id, "%s.tolerance", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_param_float_newf(HAL_RW, &(haldata->period),
-                                  hal_comp_id, "%s.period-seconds", modname);
-    if (retval != 0) goto out_closeHAL;
-
-    retval = hal_param_s32_newf(HAL_RO, &(haldata->modbus_errors),
-                                hal_comp_id, "%s.modbus-errors", modname);
-    if (retval != 0) goto out_closeHAL;
+    if (hal_setup(haldata, hal_comp_id)) {
+        retval = -1;
+        goto out_closeHAL;
+    }
 
     /* Make default data match what we expect to use */
     *haldata->inverter_status = 0;
