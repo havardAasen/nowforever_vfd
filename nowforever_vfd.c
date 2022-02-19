@@ -192,7 +192,7 @@ static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
     uint16_t freq;
 
     /* Ensure frequency is a positive number */
-    freq = abs((int) *haldata->speed_cmd * freq_calc * 100);
+    freq = abs((int) (*haldata->speed_cmd * freq_calc * 100));
 
     /* Cap at max frequency */
     if (freq > max_freq * 100) {
