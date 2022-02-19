@@ -99,16 +99,16 @@ char *modname = "nowforever_vfd";
 static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
                      struct haldata *hal_data_block)
 {
-    uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
     int retval;
+    uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
 
     /* Can't do anything with an empty datablock */
-    if (hal_data_block == NULL)
+    if (hal_data_block == NULL) {
         return -1;
+    }
 
     /* Signal error if parameter is null */
-    if ((mb_ctx == NULL) || (targetdata == NULL))
-    {
+    if ((mb_ctx == NULL) || (targetdata == NULL)) {
         hal_data_block->modbus_errors++;
         return -1;
     }
@@ -118,14 +118,14 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
 
     if (retval == targetdata->read_reg_count) {
         retval = 0;
-        *(hal_data_block->inverter_status) = receive_data[0];
-        *(hal_data_block->freq_cmd) = receive_data[1] * 0.01;
-        *(hal_data_block->output_freq) = receive_data[2] * 0.01;
-        *(hal_data_block->output_current) = receive_data[3] * 0.1;
-        *(hal_data_block->output_volt) = receive_data[4] * 0.1;
-        *(hal_data_block->dc_bus_volt) = receive_data[5];
-        *(hal_data_block->motor_load) = receive_data[6] * 0.1;
-        *(hal_data_block->inverter_temp) = receive_data[7];
+        *hal_data_block->inverter_status = receive_data[0];
+        *hal_data_block->freq_cmd = receive_data[1] * 0.01;
+        *hal_data_block->output_freq = receive_data[2] * 0.01;
+        *hal_data_block->output_current = receive_data[3] * 0.1;
+        *hal_data_block->output_volt = receive_data[4] * 0.1;
+        *hal_data_block->dc_bus_volt = receive_data[5];
+        *hal_data_block->motor_load = receive_data[6] * 0.1;
+        *hal_data_block->inverter_temp = receive_data[7];
     } else {
         fprintf(stderr, "%s: ERROR reading data for %d registers, from register 0x%04x: %s\n",
                 modname, targetdata->read_reg_count, targetdata->read_reg_start,
@@ -138,22 +138,21 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
 
 static int set_vfd_state(modbus_t *mb_ctx, struct haldata *haldata)
 {
-    uint16_t val;
     int retries;
+    uint16_t val;
 
     /* Run cw */
     if (*haldata->spindle_on && *haldata->spindle_fwd &&
-    (*haldata->inverter_status & 3) != 1) {
+       (*haldata->inverter_status & 3) != 1) {
         val = 1;
-    }
     /* Run ccw */
-    else if (*haldata->spindle_on != *haldata->spindle_fwd &&
-    (*haldata->inverter_status & 3) != 3) {
+    } else if (*haldata->spindle_on != *haldata->spindle_fwd &&
+              (*haldata->inverter_status & 3) != 3) {
         val = 3;
-    }
     /* Stop */
-    else if (!*haldata->spindle_on && (*haldata->inverter_status & 1) != 0) {
+    } else if (!*haldata->spindle_on && (*haldata->inverter_status & 1) != 0) {
         val = 0;
+    /* No new state has been requested. */
     } else {
         return 0;
     }
@@ -233,7 +232,7 @@ static void write_data(modbus_t *mb_ctx, struct haldata *haldata,
 
     /* Calculates in % difference between set and actual frequency */
     if (fabs(1 - (*haldata->freq_cmd / *haldata->output_freq)) < haldata->speed_tolerance) {
-        *(haldata->at_speed) = 1;
+        *haldata->at_speed = 1;
     } else {
         *haldata->at_speed = 0;
     }
@@ -327,79 +326,79 @@ static int hal_setup(struct haldata *haldata, int hal_comp_id)
 {
     int retval;
 
-    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->inverter_status),
+    retval = hal_pin_s32_newf(HAL_OUT, &haldata->inverter_status,
                               hal_comp_id, "%s.inverter-status", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->freq_cmd),
+    retval = hal_pin_float_newf(HAL_OUT, &haldata->freq_cmd,
                                 hal_comp_id, "%s.frequency-command", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_freq),
+    retval = hal_pin_float_newf(HAL_OUT, &haldata->output_freq,
                                 hal_comp_id, "%s.frequency-out", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_current),
+    retval = hal_pin_float_newf(HAL_OUT, &haldata->output_current,
                                 hal_comp_id, "%s.output-current", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->output_volt),
+    retval = hal_pin_float_newf(HAL_OUT, &haldata->output_volt,
                                 hal_comp_id, "%s.output-volt", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->dc_bus_volt),
+    retval = hal_pin_s32_newf(HAL_OUT, &haldata->dc_bus_volt,
                               hal_comp_id, "%s.DC-bus-volt", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->motor_load),
+    retval = hal_pin_float_newf(HAL_OUT, &haldata->motor_load,
                                 hal_comp_id, "%s.load-percentage", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_s32_newf(HAL_OUT, &(haldata->inverter_temp),
+    retval = hal_pin_s32_newf(HAL_OUT, &haldata->inverter_temp,
                               hal_comp_id, "%s.inverter-temp", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->vfd_error),
+    retval = hal_pin_bit_newf(HAL_OUT, &haldata->vfd_error,
                               hal_comp_id, "%s.vfd-error", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->at_speed),
+    retval = hal_pin_bit_newf(HAL_OUT, &haldata->at_speed,
                               hal_comp_id, "%s.at-speed", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_bit_newf(HAL_OUT, &(haldata->is_stopped),
+    retval = hal_pin_bit_newf(HAL_OUT, &haldata->is_stopped,
                               hal_comp_id, "%s.is-stopped", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_float_newf(HAL_OUT, &(haldata->speed_fb),
+    retval = hal_pin_float_newf(HAL_OUT, &haldata->speed_fb,
                                 hal_comp_id, "%s.spindle-speed-fb", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_on),
+    retval = hal_pin_bit_newf(HAL_IN, &haldata->spindle_on,
                               hal_comp_id, "%s.spindle-on", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_fwd),
+    retval = hal_pin_bit_newf(HAL_IN, &haldata->spindle_fwd,
                               hal_comp_id, "%s.spindle-fwd", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_bit_newf(HAL_IN, &(haldata->spindle_rev),
+    retval = hal_pin_bit_newf(HAL_IN, &haldata->spindle_rev,
                               hal_comp_id, "%s.spindle-rev", modname);
     if (retval != 0) return retval;
 
-    retval = hal_pin_float_newf(HAL_IN, &(haldata->speed_cmd),
+    retval = hal_pin_float_newf(HAL_IN, &haldata->speed_cmd,
                                 hal_comp_id, "%s.speed-command", modname);
     if (retval != 0) return retval;
 
-    retval = hal_param_float_newf(HAL_RW, &(haldata->speed_tolerance),
+    retval = hal_param_float_newf(HAL_RW, &haldata->speed_tolerance,
                                   hal_comp_id, "%s.tolerance", modname);
     if (retval != 0) return retval;
 
-    retval = hal_param_float_newf(HAL_RW, &(haldata->period),
+    retval = hal_param_float_newf(HAL_RW, &haldata->period,
                                   hal_comp_id, "%s.period-seconds", modname);
     if (retval != 0) return retval;
 
-    retval = hal_param_s32_newf(HAL_RO, &(haldata->modbus_errors),
+    retval = hal_param_s32_newf(HAL_RO, &haldata->modbus_errors,
                                 hal_comp_id, "%s.modbus-errors", modname);
     if (retval != 0) return retval;
 
@@ -412,16 +411,16 @@ int main(int argc, char **argv)
     struct targetdata targetdata;
     struct timespec period_timespec;
 
+    modbus_t *mb_ctx;
     char *device;
+    char parity;
     int baud;
     int bits;
-    char parity;
     int stopbits;
+    int target;
     int verbose;
 
     int retval = 0;
-    modbus_t *mb_ctx;
-    int target;
     int hal_comp_id;
     double spindle_max_speed = 24000.0;
     double max_freq = 400.0;
@@ -463,7 +462,6 @@ int main(int argc, char **argv)
                 }
                 device = strdup(optarg);
                 break;
-
             /* Module base name */
             case 'n':
                 if (strlen(optarg) > HAL_NAME_LEN - 20) {
@@ -474,7 +472,6 @@ int main(int argc, char **argv)
                 }
                 modname = strdup(optarg);
                 break;
-
             /* Parity, should be a string like "even", "odd" or "none" */
             case 'p':
                 argindex = match_string(optarg, paritystrings);
@@ -485,7 +482,6 @@ int main(int argc, char **argv)
                 }
                 parity = paritychars[argindex];
                 break;
-
             /* Baud rate, defaults to 19200 */
             case 'r':
                 argindex = match_string(optarg, ratestrings);
@@ -496,7 +492,6 @@ int main(int argc, char **argv)
                 }
                 baud = atoi(ratestrings[argindex]);
                 break;
-
             /* Target number (MODBUS ID), default 1 */
             case 't':
                 argvalue = strtol(optarg, &endarg, 10);
@@ -508,7 +503,6 @@ int main(int argc, char **argv)
                 }
                 target = argvalue;
                 break;
-
             case 'S':
                 spindle_max_speed = strtod(optarg, &endarg);
                 if ((*endarg != '\0') || (spindle_max_speed <= 0.0)) {
@@ -518,7 +512,6 @@ int main(int argc, char **argv)
                     goto out_noclose;
                 }
                 break;
-
             case 'F':
                 max_freq = strtod(optarg, &endarg);
                 if ((*endarg != '\0') || (max_freq <= 0.0)) {
@@ -528,16 +521,13 @@ int main(int argc, char **argv)
                     goto out_noclose;
                 }
                 break;
-
             case 'v':
                 verbose = 1;
                 break;
-
             case 'h':
                 usage(argc, argv);
                 exit(0);
                 break;
-
             default:
                 usage(argc, argv);
                 exit(1);
@@ -572,7 +562,6 @@ int main(int argc, char **argv)
     }
 
     modbus_set_debug(mb_ctx, verbose);
-
     modbus_set_slave(mb_ctx, target);
 
     /* Create HAL component */
@@ -632,8 +621,6 @@ int main(int argc, char **argv)
         read_data(mb_ctx, &targetdata, haldata);
         write_data(mb_ctx, haldata, hzcalc, max_freq);
     }
-
-    /* TODO Add motor off */
 
     /* If we get here, then everything is fine, so just clean up and exit */
     retval = 0;
