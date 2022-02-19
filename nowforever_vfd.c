@@ -187,7 +187,7 @@ static int set_vfd_state(modbus_t *mb_ctx, struct haldata *haldata)
  * shall return -1
  */
 static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
-                        hal_float_t freq_calc, float max_freq)
+                        double freq_calc, double max_freq)
 {
     int retries;
     uint16_t freq;
@@ -218,7 +218,7 @@ static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
 
 /* Write to vfd and set HAL pins */
 static void write_data(modbus_t *mb_ctx, struct haldata *haldata,
-                       hal_float_t hzcalc, float max_freq)
+                       double hzcalc, double max_freq)
 {
     set_vfd_state(mb_ctx, haldata);
     set_vfd_freq(mb_ctx, haldata, hzcalc, max_freq);
@@ -423,9 +423,9 @@ int main(int argc, char **argv)
     modbus_t *mb_ctx;
     int target;
     int hal_comp_id;
-    float spindle_max_speed = 24000.0;
-    float max_freq = 400.0;
-    hal_float_t hzcalc;
+    double spindle_max_speed = 24000.0;
+    double max_freq = 400.0;
+    double hzcalc;
 
     char *endarg;
     int opt;
