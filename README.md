@@ -1,6 +1,6 @@
-# nowforever-vfd
+# Nowforever VFD driver
 Nowforever D100 and E100 VFD LinuxCNC HAL userspace interface / driver, using
-RS485 MODBUS RTU
+RS485 Modbus RTU
 
 ## Build and install
 I'm assuming you already have set up LinuxCNC, if not, go to their website
@@ -8,12 +8,12 @@ I'm assuming you already have set up LinuxCNC, if not, go to their website
 
 To download and build the driver, we need some additional packages:
 
-git - download the repository  
-libmodbus-dev - development files for the Modbus connection  
-linuxcnc-uspace-dev - development files for LinuxCNC
+- `git`, download the repository
+- `libmodbus-dev`, development files for the Modbus connection
+- `linuxcnc-uspace-dev`, development files for LinuxCNC
 
 ```
-$ sudo apt-get install libmodbus-dev linuxcnc-uspace-dev git
+$ sudo apt-get install git libmodbus-dev linuxcnc-uspace-dev
 $ git clone https://github.com/havardAasen/nowforever_vfd.git
 $ cd nowforever_vfd
 $ make
@@ -21,13 +21,13 @@ $ sudo make install
 ```
 
 ## Documentation and usage
-The man-page `nowforever_vfd` describes the parameter to adjust on the
+The man-page `nowforever_vfd.1` describes the parameter to adjust on the
 Nowforever VFD. It also lists the different command-line options if you
 need to customize anything regarding Modbus The man-page also lists the
 pins and signals which is used with LinuxCNC.
 
-`custom.hal` is an example on how to create the signals and connect
-the pins to LinuxCNC.
+The provided file `custom.hal` is an example on how to create the signals
+and connect the pins to LinuxCNC.
 
 ## Testing
 If you want to test the VFD, you can use one of the sample configurations
@@ -47,6 +47,6 @@ that comes shipped with LinuxCNC.
 - Go to `HAL` section and comment out `HALFILE = sim_spindle_encoder.hal`.
 - Continuing in the `HAL` section, add `HALFILE = custom.hal` as the last entry.
 
-## Licence
-This software is released under the **GPLv2** license. See the file COPYING
-for more details.
+## License
+This software is released under the **GPLv2** license. See the file `COPYING`
+for more information.
