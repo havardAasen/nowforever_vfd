@@ -1,10 +1,11 @@
+/**
+ * @file nowforever_vfd.c
+ * @brief A userspace program that interfaces the Nowforever D100/E100 VFD
+ *        to the LinuxCNC HAL, using RS485 ModBus RTU.
+ */
+
 /*
- * nowforever_vfd.c
- *
- * This is a userspace program that interfaces the Nowforever D100/E100 VFD
- * to the LinuxCNC HAL, using RS485 ModBus RTU.
- *
- * Copyright (C) 2020 Håvard Flaget Aasen <havard.flaget.aasen@gmail.com>
+ * Copyright (C) 2020-2022 Håvard F. Aasen <havard.f.aasen@pfft.no>
  *
  * Based on other drivers found in the LinuxCNC repository.
  *
@@ -17,7 +18,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software Foundation,
@@ -41,56 +41,56 @@
 #include "rtapi.h"
 
 
-/* If a modbus transaction fails, retry this many times before giving up. */
+/** If a modbus transaction fails, retry this many times before giving up. */
 #define NUM_MODBUS_RETRIES 5
 
 #define START_REGISTER_R        0x0500
 #define NUM_REGISTER_R          8
 
-/*
- * Bit 0: 1 = run, 0 = stop
- * Bit 1: 1 = reverse, 0 = forward
- * Bit 2: 1 = JOG, 0 = stop JOG
- * Bit 3: 1 = fault reset 0 = no reset
+/**
+ * Bit 0: 1 = run, 0 = stop @n
+ * Bit 1: 1 = reverse, 0 = forward @n
+ * Bit 2: 1 = JOG, 0 = stop JOG @n
+ * Bit 3: 1 = fault reset 0 = no reset @n
  */
 #define VFD_INSTRUCTION         0x0900
 
-/* Write frequency in 0.01 Hz steps */
+/** Write frequency in 0.01 Hz steps */
 #define VFD_FREQUENCY           0x0901
 
+/** Target and registers to read from. */
 struct targetdata {
-    int target;
-    int read_reg_start;
-    int read_reg_count;
+    int target;             /*!< address of device to read from */
+    int read_reg_start;     /*!< register to start reading from */
+    int read_reg_count;     /*!< how many registers to read */
 };
 
+/** Signals, pins and parameters from LinuxCNC and HAL */
 struct haldata {
-    /* Read pin from VFD, (inverter running state) */
-    hal_s32_t       *inverter_status;
-    hal_float_t     *freq_cmd;
-    hal_float_t     *output_freq;
-    hal_float_t     *output_current;
-    hal_float_t     *output_volt;
-    hal_s32_t       *dc_bus_volt;
-    hal_float_t     *motor_load;
-    hal_s32_t       *inverter_temp;
-    hal_bit_t       *vfd_error;
+    /* Information acquired from vfd */
+    hal_s32_t   *inverter_status;   /*!< vfd's running state */
+    hal_float_t *freq_cmd;          /*!< reference frequency (Hz) */
+    hal_float_t *output_freq;       /*!< output frequency (Hz) */
+    hal_float_t *output_current;    /*!< motor current (A) */
+    hal_float_t *output_volt;       /*!< motor voltage (V) */
+    hal_s32_t   *dc_bus_volt;       /*!< main voltage (V) */
+    hal_float_t *motor_load;
+    hal_s32_t   *inverter_temp;
+    hal_bit_t   *vfd_error;
+    hal_bit_t   *at_speed;
+    hal_bit_t   *is_stopped;
+    hal_float_t *speed_fb;
 
-    /* Created */
-    hal_bit_t       *at_speed;
-    hal_bit_t       *is_stopped;
-    hal_float_t     *speed_fb;
+    /* Commands from LinuxCNC */
+    hal_bit_t   *spindle_on;
+    hal_bit_t   *spindle_fwd;
+    hal_bit_t   *spindle_rev;
+    hal_float_t *speed_cmd;
 
-    /* In to VFD */
-    hal_bit_t       *spindle_on;
-    hal_bit_t       *spindle_fwd;
-    hal_bit_t       *spindle_rev;
-    hal_float_t     *speed_cmd;
-
-    /* Parameter */
-    hal_float_t     speed_tolerance;
-    hal_float_t     period;
-    hal_s32_t       modbus_errors;
+    /* Parameters */
+    hal_float_t speed_tolerance;
+    hal_float_t period;
+    hal_s32_t   modbus_errors;
 };
 
 static int done;
@@ -169,21 +169,20 @@ static int set_vfd_state(modbus_t *mb_ctx, struct haldata *haldata)
 }
 
 /**
- * set_vfd_freq - Send new frequency to vfd.
- * @mb_ctx: modbus context
- * @haldata: signals to and from LinuxCNC
- * @freq_calc: calculated value, based on @max_freq and @spindle_max_speed
+ * @brief Write new frequency to vfd.
  *
- * If the new frequency is different from the current output frequency, send
+ * If the new frequency is different from the current frequency, send
  * the new frequency to vfd. If the frequency is identical, do nothing.
+ * Ensures that the frequency written to vfd is a positive number, and that the
+ * frequency is never larger than @c max_freq.
  *
- * Ensures the value sent to vfd is a positive number. Ensures that the
- * frequency sent to vfd is never larger than @max_freq (default: 400.0).
- * @maq_freq can be changed with the 'F' flag.
- *
- * Return:
- * 0 On success, or when it is not needed to write data. Otherwise it
- * shall return -1
+ * @param mb_ctx modbus context
+ * @param haldata Information to and from LinuxCNC.
+ * @param freq_calc Calculated value, based on @c max_freq and
+ *                  @c spindle_max_speed
+ * @param max_freq Maximum allowed frequency.
+ * @return 0 on success, or when it's not needed to write data to vfd.
+ *         Otherwise return -1.
  */
 static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
                         double freq_calc, double max_freq)
@@ -322,6 +321,12 @@ static void usage(int argc, char **argv)
     printf("       Show this help.\n");
 }
 
+/**
+ * @brief Create HAL pins.
+ * @param haldata Information to and from, LinuxCNC.
+ * @param hal_comp_id Component ID created by HAL.
+ * @return 0 on success, -1 on failure.
+ */
 static int hal_setup(struct haldata *haldata, int hal_comp_id)
 {
     int retval;
