@@ -572,7 +572,7 @@ int main(int argc, char **argv)
         goto out_close;
     }
 
-    haldata = (struct haldata *)hal_malloc(sizeof(struct haldata));
+    haldata = hal_malloc(sizeof(struct haldata));
     if (haldata == NULL) {
         fprintf(stderr, "%s: ERROR: unable to allocate shared memory\n",
                 modname);
