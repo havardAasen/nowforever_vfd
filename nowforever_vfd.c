@@ -284,7 +284,7 @@ static int match_string(char *string, char **matches)
     return match;
 }
 
-static void usage(int argc, char **argv)
+static void usage(char **argv)
 {
     printf("Usage: %s [ARGUMENTS]\n", argv[0]);
     printf("\n");
@@ -525,11 +525,11 @@ int main(int argc, char **argv)
                 verbose = 1;
                 break;
             case 'h':
-                usage(argc, argv);
+                usage(argv);
                 exit(0);
                 break;
             default:
-                usage(argc, argv);
+                usage(argv);
                 exit(1);
                 break;
         }
