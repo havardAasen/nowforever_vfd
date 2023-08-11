@@ -44,8 +44,11 @@
 /** If a modbus transaction fails, retry this many times before giving up. */
 #define NUM_MODBUS_RETRIES 5
 
-#define START_REGISTER_R        0x0500
-#define NUM_REGISTER_R          8
+/** Address of register to read from. */
+#define START_REGISTER_READ     0x0500
+
+/** Number of registers to read */
+#define NUM_REGISTER_READ       8
 
 /**
  * Bit 0: 1 = run, 0 = stop @n
@@ -58,12 +61,6 @@
 /** Write frequency in 0.01 Hz steps */
 #define VFD_FREQUENCY           0x0901
 
-/** Target and registers to read from. */
-struct targetdata {
-    int target;             /*!< address of device to read from */
-    int read_reg_start;     /*!< register to start reading from */
-    int read_reg_count;     /*!< how many registers to read */
-};
 
 /** Signals, pins and parameters from LinuxCNC and HAL */
 struct haldata {
@@ -96,23 +93,16 @@ struct haldata {
 static int done;
 char *modname = "nowforever_vfd";
 
-static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
-                     struct haldata *hal_data_block)
+static int read_data(modbus_t *mb_ctx, struct haldata *hal_data_block)
 {
     int retries;
     uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
 
-    /* Signal error if parameter is null */
-    if (targetdata == NULL) {
-        hal_data_block->modbus_errors++;
-        return -1;
-    }
-
     for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
-        int retval = modbus_read_registers(mb_ctx, targetdata->read_reg_start,
-                                           targetdata->read_reg_count, receive_data);
+        int retval = modbus_read_registers(mb_ctx, START_REGISTER_READ,
+                                           NUM_REGISTER_READ, receive_data);
 
-        if (retval == targetdata->read_reg_count) {
+        if (retval == NUM_REGISTER_READ) {
             *hal_data_block->inverter_status = receive_data[0];
             *hal_data_block->freq_cmd = receive_data[1] * 0.01;
             *hal_data_block->output_freq = receive_data[2] * 0.01;
@@ -124,7 +114,7 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
             return 0;
         }
         fprintf(stderr, "%s: ERROR reading data for %d registers, from register 0x%04x: %s\n",
-                modname, targetdata->read_reg_count, targetdata->read_reg_start,
+                modname, NUM_REGISTER_READ, START_REGISTER_READ,
                 modbus_strerror(errno));
         hal_data_block->modbus_errors++;
     }
@@ -408,7 +398,6 @@ static int hal_setup(struct haldata *haldata, int hal_comp_id)
 int main(int argc, char **argv)
 {
     struct haldata *haldata;
-    struct targetdata targetdata;
     struct timespec period_timespec;
 
     modbus_t *mb_ctx;
@@ -442,8 +431,6 @@ int main(int argc, char **argv)
     verbose = 0;
 
     target = 1;
-    targetdata.read_reg_start = START_REGISTER_R;
-    targetdata.read_reg_count = NUM_REGISTER_R;
 
     /* Process command line options */
     while ((opt = getopt_long(argc, argv, option_string, long_options, NULL)) != -1) {
@@ -618,7 +605,7 @@ int main(int argc, char **argv)
         period_timespec.tv_nsec = (long)((haldata->period - period_timespec.tv_sec) * 1000000000l);
         nanosleep(&period_timespec, NULL);
 
-        read_data(mb_ctx, &targetdata, haldata);
+        read_data(mb_ctx, haldata);
         write_data(mb_ctx, haldata, hzcalc, max_freq);
     }
 
