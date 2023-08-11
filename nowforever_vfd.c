@@ -190,7 +190,7 @@ static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
 
     /* Cap at max frequency */
     if (freq > max_freq * 100) {
-        freq = max_freq * 100;
+        freq = (uint16_t) (max_freq * 100);
     }
 
     /* Cast to int, to compare values. */
