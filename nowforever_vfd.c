@@ -61,6 +61,12 @@
 /** Write frequency in 0.01 Hz steps */
 #define VFD_FREQUENCY           0x0901
 
+/** Running states the vfd can be in. */
+enum vfd_state {
+    VFD_STOP = 0,
+    VFD_CW = 1,
+    VFD_CCW = 3,
+};
 
 /** Signals, pins and parameters from LinuxCNC and HAL */
 struct haldata {
@@ -121,32 +127,40 @@ static int read_data(modbus_t *mb_ctx, struct haldata *hal_data_block)
     return -1;
 }
 
+/**
+ * @brief Set new state for vfd.
+ *
+ * Possible states is @c CW, @c CCW and @c STOP, it will only write to the
+ * inverter if a new state has been requested.
+ *
+ * @param mb_ctx modbus context
+ * @param haldata Information to and from LinuxCNC.
+ * @return 0 on success and when we continue with the current state.
+ *         Otherwise return -1.
+ */
 static int set_vfd_state(modbus_t *mb_ctx, struct haldata *haldata)
 {
     int retries;
-    uint16_t val;
+    uint16_t state;
 
-    /* Run cw */
     if (*haldata->spindle_on && *haldata->spindle_fwd &&
-       (*haldata->inverter_status & 3) != 1) {
-        val = 1;
-    /* Run ccw */
-    } else if (*haldata->spindle_on != *haldata->spindle_fwd &&
-              (*haldata->inverter_status & 3) != 3) {
-        val = 3;
-    /* Stop */
-    } else if (!*haldata->spindle_on && (*haldata->inverter_status & 1) != 0) {
-        val = 0;
+       (*haldata->inverter_status & 3) != VFD_CW) {
+        state = VFD_CW;
+    } else if (*haldata->spindle_on && *haldata->spindle_rev &&
+              (*haldata->inverter_status & 3) != VFD_CCW) {
+        state = VFD_CCW;
+    } else if (!*haldata->spindle_on && (*haldata->inverter_status & 1) != VFD_STOP) {
+        state = VFD_STOP;
     /* No new state has been requested. */
     } else {
         return 0;
     }
 
     for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
-        if (modbus_write_registers(mb_ctx, VFD_INSTRUCTION, 0x01, &val) == 1)
+        if (modbus_write_registers(mb_ctx, VFD_INSTRUCTION, 0x01, &state) == 1)
             return 0;
         fprintf(stderr, "%s: ERROR writing %u to register 0x%04x: %s\n",
-                modname, val, VFD_INSTRUCTION, modbus_strerror(errno));
+                modname, state, VFD_INSTRUCTION, modbus_strerror(errno));
         haldata->modbus_errors++;
     }
     return -1;
