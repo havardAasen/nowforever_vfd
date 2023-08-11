@@ -143,9 +143,8 @@ static int set_vfd_state(modbus_t *mb_ctx, struct haldata *haldata)
     }
 
     for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
-        if (modbus_write_registers(mb_ctx, VFD_INSTRUCTION, 0x01, &val) == 1) {
+        if (modbus_write_registers(mb_ctx, VFD_INSTRUCTION, 0x01, &val) == 1)
             return 0;
-        }
         fprintf(stderr, "%s: ERROR writing %u to register 0x%04x: %s\n",
                 modname, val, VFD_INSTRUCTION, modbus_strerror(errno));
         haldata->modbus_errors++;
@@ -179,19 +178,16 @@ static int set_vfd_freq(modbus_t *mb_ctx, struct haldata *haldata,
     freq = abs((int) (*haldata->speed_cmd * freq_calc * 100));
 
     /* Cap at max frequency */
-    if (freq > max_freq * 100) {
+    if (freq > max_freq * 100)
         freq = (uint16_t) (max_freq * 100);
-    }
 
     /* Cast to int, to compare values. */
-    if (freq == (int) (*haldata->output_freq * 100)) {
+    if (freq == (int) (*haldata->output_freq * 100))
         return 0;
-    }
 
     for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
-        if (modbus_write_registers(mb_ctx, VFD_FREQUENCY, 0x01, &freq) == 1) {
+        if (modbus_write_registers(mb_ctx, VFD_FREQUENCY, 0x01, &freq) == 1)
             return 0;
-        }
         fprintf(stderr, "%s: ERROR writing %u to register 0x%04x: %s\n",
                 modname, freq, VFD_FREQUENCY, modbus_strerror(errno));
         haldata->modbus_errors++;
@@ -221,13 +217,11 @@ static void write_data(modbus_t *mb_ctx, struct haldata *haldata,
         *haldata->at_speed = 0;
     }
 
-    if (*haldata->spindle_on == 0) {
+    if (*haldata->spindle_on == 0)
         *haldata->at_speed = 0;
-    }
 
-    if ((*haldata->inverter_status & 24) != 0) {
+    if ((*haldata->inverter_status & 24) != 0)
         *haldata->vfd_error = 1;
-    }
 }
 
 /* Command-line options */
