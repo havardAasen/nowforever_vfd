@@ -99,7 +99,7 @@ char *modname = "nowforever_vfd";
 static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
                      struct haldata *hal_data_block)
 {
-    int retval;
+    int retries;
     uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
 
     /* Signal error if parameter is null */
@@ -108,27 +108,27 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
         return -1;
     }
 
-    retval = modbus_read_registers(mb_ctx, targetdata->read_reg_start,
-                                   targetdata->read_reg_count, receive_data);
+    for (retries = 0; retries <= NUM_MODBUS_RETRIES; retries++) {
+        int retval = modbus_read_registers(mb_ctx, targetdata->read_reg_start,
+                                           targetdata->read_reg_count, receive_data);
 
-    if (retval == targetdata->read_reg_count) {
-        retval = 0;
-        *hal_data_block->inverter_status = receive_data[0];
-        *hal_data_block->freq_cmd = receive_data[1] * 0.01;
-        *hal_data_block->output_freq = receive_data[2] * 0.01;
-        *hal_data_block->output_current = receive_data[3] * 0.1;
-        *hal_data_block->output_volt = receive_data[4] * 0.1;
-        *hal_data_block->dc_bus_volt = receive_data[5];
-        *hal_data_block->motor_load = receive_data[6] * 0.1;
-        *hal_data_block->inverter_temp = receive_data[7];
-    } else {
+        if (retval == targetdata->read_reg_count) {
+            *hal_data_block->inverter_status = receive_data[0];
+            *hal_data_block->freq_cmd = receive_data[1] * 0.01;
+            *hal_data_block->output_freq = receive_data[2] * 0.01;
+            *hal_data_block->output_current = receive_data[3] * 0.1;
+            *hal_data_block->output_volt = receive_data[4] * 0.1;
+            *hal_data_block->dc_bus_volt = receive_data[5];
+            *hal_data_block->motor_load = receive_data[6] * 0.1;
+            *hal_data_block->inverter_temp = receive_data[7];
+            return 0;
+        }
         fprintf(stderr, "%s: ERROR reading data for %d registers, from register 0x%04x: %s\n",
                 modname, targetdata->read_reg_count, targetdata->read_reg_start,
                 modbus_strerror(errno));
         hal_data_block->modbus_errors++;
-        retval = -1;
     }
-    return retval;
+    return -1;
 }
 
 static int set_vfd_state(modbus_t *mb_ctx, struct haldata *haldata)
