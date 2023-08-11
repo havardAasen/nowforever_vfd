@@ -103,7 +103,7 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
     uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
 
     /* Signal error if parameter is null */
-    if ((mb_ctx == NULL) || (targetdata == NULL)) {
+    if (targetdata == NULL) {
         hal_data_block->modbus_errors++;
         return -1;
     }
