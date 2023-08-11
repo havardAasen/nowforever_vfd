@@ -102,11 +102,6 @@ static int read_data(modbus_t *mb_ctx, struct targetdata *targetdata,
     int retval;
     uint16_t receive_data[MODBUS_MAX_READ_REGISTERS];
 
-    /* Can't do anything with an empty datablock */
-    if (hal_data_block == NULL) {
-        return -1;
-    }
-
     /* Signal error if parameter is null */
     if ((mb_ctx == NULL) || (targetdata == NULL)) {
         hal_data_block->modbus_errors++;
